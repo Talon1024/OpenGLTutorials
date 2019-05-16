@@ -25,19 +25,19 @@ config.set('TUT2_FRAGMENT_SHADER', '"tut2.fp"')
 executable('tut1', 'tut1.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
 
 # Tutorial 2: Hello Triangle
-executable('tut2', 'tut2.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+executable('tut2.1', 'tut2.1.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
 # Part 2: Rectangle
-executable('tut2.333', 'tut2.333.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+executable('tut2.2', 'tut2.2.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
 # Part 3: Element buffer objects
-executable('tut2.667', 'tut2.667.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+executable('tut2.3', 'tut2.3.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
 run_command('cp', ['-t', meson.build_root(), files('tut2.fp', 'tut2.vp')])
 
 # Tutorial 3: GLSL shaders
 config.set('TUT3_VERTEX_SHADER', '"tut3.vp"')
 config.set('TUT3_FRAGMENT_SHADER', '"tut3.fp"')
-config.set('TUT35_FRAGMENT_SHADER', '"tut3.5.fp"')
-executable('tut3', 'tut3.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
-executable('tut3.5', 'tut3.5.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
-run_command('cp', ['-t', meson.build_root(), files('tut3.fp', 'tut3.5.fp', 'tut3.vp')])
+config.set('TUT35_FRAGMENT_SHADER', '"tut3.2.fp"')
+executable('tut3.1', 'tut3.1.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+executable('tut3.2', 'tut3.2.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+run_command('cp', ['-t', meson.build_root(), files('tut3.fp', 'tut3.2.fp', 'tut3.vp')])
 
 configure_file(output: 'config.h', configuration: config)
