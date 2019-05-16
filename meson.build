@@ -24,4 +24,4 @@ configure_file(output: 'config.h', configuration: config)
 
 executable('tut1', 'tut1.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
 executable('tut2', 'tut2.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
-install_data('tut2.vp', 'tut2.fp', install_dir: '.')
+run_command('cp', ['-t', meson.build_root(), files('tut2.fp', 'tut2.vp')])

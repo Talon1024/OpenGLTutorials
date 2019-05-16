@@ -11,7 +11,7 @@ glGenObject(1, &objectId);
 glBindObject(GL_WINDOW_TARGET, objectId);
 ```
 
-3. Set the options for the [target? object?]
+3. Set the options for the object
 ```
 glSetObjectOption(GL_WINDOW_TARGET, GL_OPTION_WINDOW_WIDTH, 800);
 glSetObjectOption(GL_WINDOW_TARGET, GL_OPTION_WINDOW_HEIGHT, 600);

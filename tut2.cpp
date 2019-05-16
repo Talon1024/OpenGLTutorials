@@ -5,6 +5,9 @@
 #include <fstream>
 #include <sys/stat.h>
 
+// Tutorial 2: Hello Triangle
+// https://learnopengl.com/Getting-started/Hello-Triangle
+
 bool compileShader(const char* filename, unsigned int type, unsigned int &id);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void error_callback(int error, const char* description);
@@ -59,7 +62,7 @@ int main(int argc, char** argv) {
     // Give OpenGL information about how the vertex buffer data is presented
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
     glEnableVertexAttribArray(0);
-    
+
     // Release bindings
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
