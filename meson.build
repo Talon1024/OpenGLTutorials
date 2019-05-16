@@ -22,8 +22,14 @@ config.set('TUT2_VERTEX_SHADER', '"tut2.vp"')
 config.set('TUT2_FRAGMENT_SHADER', '"tut2.fp"')
 configure_file(output: 'config.h', configuration: config)
 
+# Tutorial 1: Hello Window
 executable('tut1', 'tut1.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+
+# Tutorial 2: Hello Triangle
 executable('tut2', 'tut2.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+# Part 2: Rectangle
 executable('tut2.333', 'tut2.333.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+# Part 3: Element buffer objects
 executable('tut2.667', 'tut2.667.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
 run_command('cp', ['-t', meson.build_root(), files('tut2.fp', 'tut2.vp')])
+

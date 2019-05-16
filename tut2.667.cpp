@@ -38,6 +38,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    const char* renderer = (const char*) glGetString(GL_RENDERER);
+    const char* glversion = (const char*) glGetString(GL_VERSION);
+    std::cout << "Renderer: " << renderer << std::endl << "OpenGL Version: " << glversion << std::endl;
+
     // Set up viewport, and resize callback
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);

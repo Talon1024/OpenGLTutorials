@@ -59,6 +59,7 @@ Z = 0
 ```
 
 Vertex Buffer Objects
+=====================
 Use VBOs to manage the vertex data being sent to the GPU
 `glGenBuffers(x, vBufID)`
 will allocate vertex buffer objects, and return the IDs of the allocated buffers.
@@ -70,6 +71,7 @@ GL_STATIC_DRAW makes the data harder to write to, but faster to render if it doe
 GL_DYNAMIC_DRAW or GL_STREAM_DRAW makes the data easier to write to
 
 Shaders
+=======
 For modern rendering pipelines, which give more control over what is rendered, vertex and fragment shaders are required.
 Declare inputs at the top of vertex and fragment shaders using `layout (location = 0) in vec3 aPos;` for example
 Shaders first have to be compiled, and then one or more shader(s) are linked into a shader program
@@ -91,9 +93,11 @@ In the code that renders the scene: `glUseProgram();`
 After you're done with the shaders: `glDeleteShader(shaderId);`
 
 Vertex buffers
+==============
 These are usually arrays that store the vertex data, including attributes like XYZ coordinates, XYZ normals, UV coordinates, etc. You can store vertices as either 2 or 3 contiguous floats at once, depending on whether you're drawing in 2D or 3D.
 
 Vertex array objects
+====================
 This is a way to store the configurations for vertex buffer attributes. In order to use it, put glGenVertexArrays(VAO) before the code that sets up the vertex buffers and their respective attributes, and put glBindVertexArray(VAO) when you are done setting up the aforementioned data.
 ```
 unsigned int VAO;
@@ -117,12 +121,14 @@ glBindVertexArray(0);
 ```
 
 Drawing stuff (FINALLY!!!)
+==========================
 In the render loop:
 1. Bind the shader program for the stuff you want to draw: `glUseProgram(shaderProgram);`
 2. Bind the vertex array for the thing you want to draw: `glBindVertexArray(VAO);`
 3. Call the function to draw the vertex array: `glDrawArrays(GL_TRIANGLES, 0, x);` where x is the number of vertices
 
 Element Buffer Objects
+======================
 An element buffer object is a way to make OpenGL use the indices of the vertices in the buffer, in order to help prevent repetition of data in the vertex buffer.
 Here is a vertex buffer and an element buffer for a rectangle with 4 vertices:
 ```
@@ -149,6 +155,20 @@ glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 Maybe release the binding afterwards: `glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);`
 Use `glDrawElements(GL_TRIANGLES, x, GL_UNSIGNED_INT, 0);` to draw using both a VAO and an EBO, where x is the number of vertices to draw. Don't forget to bind the vertex array object before you do!
 
-Wireframe mode
-In order to draw your polygons as a wireframe, set glPolygonMode to GL_LINE instead of GL_FILL.
+Drawing modes
+=============
+The drawing mode specifies how your polygons should be drawn. GL_FILL is the default drawing mode.
 `glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);`
+In order to draw your polygons as a wireframe, set glPolygonMode to GL_LINE instead of GL_FILL.
+`glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);`
+In order to draw your polygons as a point cloud, set glPolygonMode to GL_POINT.
+`glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);`
+
+OpenGL version and rendering device
+===================================
+To get the OpenGL version currently being used, as well as what is doing the rendering:
+```
+const char* renderer = glGetString(GL_RENDERER);
+const char* glversion = glGetString(GL_VERSION);
+std::cout << "Renderer: " << renderer << std::endl << "OpenGL Version: " << glversion << std::endl;
+```
