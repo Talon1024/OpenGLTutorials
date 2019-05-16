@@ -45,14 +45,14 @@ int main(int argc, char** argv) {
 
     // Define vertex array
     float vertices[] = {
-        // first triangle
          0.5,  0.5, 0.0,  // top right
          0.5, -0.5, 0.0,  // bottom right
-        -0.5,  0.5, 0.0,  // top left 
-        // second triangle
-         0.5, -0.5,  0.0,  // bottom right
-        -0.5, -0.5,  0.0,  // bottom left
-        -0.5,  0.5,  0.0   // top left
+        -0.5, -0.5, 0.0,  // bottom left
+        -0.5,  0.5, 0.0   // top left 
+    };
+    unsigned int indices[] = {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
     };
 
     unsigned int VAO;
@@ -72,6 +72,15 @@ int main(int argc, char** argv) {
     // Release bindings
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    // Generate element buffer and upload it to the GPU
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // Release bindings
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Load and compile the vertex and fragment shaders
     unsigned int vertexShader;
@@ -120,13 +129,19 @@ int main(int argc, char** argv) {
         // Use shader program
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Use EBO
         // FINALLY DRAW THAT SHITE
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // Display rendered frame while waiting for the other frame to render
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    // Release bindings
+    glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Release all GLFW resources and exit
     glfwTerminate();

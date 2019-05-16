@@ -65,7 +65,7 @@ will allocate vertex buffer objects, and return the IDs of the allocated buffers
 `glBindBuffer(GL_ARRAY_BUFFER, vBufID)`
 will set the buffer with vBufID to be an "array buffer"
 `glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW)`
-will upload the data from the "vertices" array to the GPU.
+will upload the data from the "vertices" array to the GPU. (I think)
 GL_STATIC_DRAW makes the data harder to write to, but faster to render if it doesn't change
 GL_DYNAMIC_DRAW or GL_STREAM_DRAW makes the data easier to write to
 
@@ -90,6 +90,9 @@ glLinkProgram(shaderProgram);
 In the code that renders the scene: `glUseProgram();`
 After you're done with the shaders: `glDeleteShader(shaderId);`
 
+Vertex buffers
+These are usually arrays that store the vertex data, including attributes like XYZ coordinates, XYZ normals, UV coordinates, etc. You can store vertices as either 2 or 3 contiguous floats at once, depending on whether you're drawing in 2D or 3D.
+
 Vertex array objects
 This is a way to store the configurations for vertex buffer attributes. In order to use it, put glGenVertexArrays(VAO) before the code that sets up the vertex buffers and their respective attributes, and put glBindVertexArray(VAO) when you are done setting up the aforementioned data.
 ```
@@ -112,3 +115,40 @@ glEnableVertexAttribArray(0);
 glBindBuffer(GL_ARRAY_BUFFER, 0);
 glBindVertexArray(0);
 ```
+
+Drawing stuff (FINALLY!!!)
+In the render loop:
+1. Bind the shader program for the stuff you want to draw: `glUseProgram(shaderProgram);`
+2. Bind the vertex array for the thing you want to draw: `glBindVertexArray(VAO);`
+3. Call the function to draw the vertex array: `glDrawArrays(GL_TRIANGLES, 0, x);` where x is the number of vertices
+
+Element Buffer Objects
+An element buffer object is a way to make OpenGL use the indices of the vertices in the buffer, in order to help prevent repetition of data in the vertex buffer.
+Here is a vertex buffer and an element buffer for a rectangle with 4 vertices:
+```
+// Vertex buffer
+float vertices[] = {
+        0.5,  0.5, 0.0,  // top right
+        0.5, -0.5, 0.0,  // bottom right
+    -0.5, -0.5, 0.0,  // bottom left
+    -0.5,  0.5, 0.0   // top left 
+};
+// Element buffer
+unsigned int indices[] = {  // note that we start from 0!
+    0, 1, 3,   // first triangle
+    1, 2, 3    // second triangle
+};
+```
+To upload it to the GPU:
+```
+unsigned int EBO;
+glGenBuffers(1, &EBO);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+```
+Maybe release the binding afterwards: `glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);`
+Use `glDrawElements(GL_TRIANGLES, x, GL_UNSIGNED_INT, 0);` to draw using both a VAO and an EBO, where x is the number of vertices to draw. Don't forget to bind the vertex array object before you do!
+
+Wireframe mode
+In order to draw your polygons as a wireframe, set glPolygonMode to GL_LINE instead of GL_FILL.
+`glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);`
