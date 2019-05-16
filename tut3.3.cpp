@@ -4,10 +4,9 @@
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
-#include <cmath>
 
 // Tutorial 3: GLSL shaders and uniforms
-// Part 2: Uniforms
+// Part 3: More attributes
 // https://learnopengl.com/Getting-started/Shaders
 
 bool compileShader(const char* filename, unsigned int type, unsigned int &id);
@@ -39,23 +38,17 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    const char* renderer = (const char*) glGetString(GL_RENDERER);
-    const char* glversion = (const char*) glGetString(GL_VERSION);
-    std::cout << "Renderer: " << renderer << std::endl << "OpenGL Version: " << glversion << std::endl;
-
     // Set up viewport, and resize callback
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetErrorCallback(error_callback);
-
+    
     // Define vertex array
     float vertices[] = {
-         0.0,  0.5, 0.0,  // top
-        -0.5, -0.5, 0.0,  // bottom left
-         0.5, -0.5, 0.0,  // bottom right
-    };
-    unsigned int indices[] = {  // note that we start from 0!
-        0, 1, 2,   // first triangle
+        // positions         // colors
+        0.5, -0.5, 0.0,  1.0, 0.0, 0.0,   // bottom right
+        -0.5, -0.5, 0.0,  0.0, 1.0, 0.0,   // bottom left
+        0.0,  0.5, 0.0,  0.0, 0.0, 1.0    // top 
     };
 
     unsigned int VAO;
@@ -69,31 +62,30 @@ int main(int argc, char** argv) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // Give OpenGL information about how the vertex buffer data is presented
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // Since we now have vertex colours in the vertex array, these need to be changed a bit
+    // Vertex positions
+    // The first argument to glVertexAttribPointer is the array index, corresponding to the
+    // layout(location = x) line in the vertex shader
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
     glEnableVertexAttribArray(0);
+
+    // Vertex colours
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)) );
+    glEnableVertexAttribArray(1);
 
     // Release bindings
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    // Generate element buffer and upload it to the GPU
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // Release bindings
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
     // Load and compile the vertex and fragment shaders
     unsigned int vertexShader;
-    if (!compileShader(TUT3_VERTEX_SHADER, GL_VERTEX_SHADER, vertexShader))
+    if (!compileShader(TUT33_VERTEX_SHADER, GL_VERTEX_SHADER, vertexShader))
     {
         // Error messages are printed inside compileShader
         return 1;
     }
     unsigned int fragmentShader;
-    if (!compileShader(TUT32_FRAGMENT_SHADER, GL_FRAGMENT_SHADER, fragmentShader))
+    if (!compileShader(TUT33_FRAGMENT_SHADER, GL_FRAGMENT_SHADER, fragmentShader))
     {
         return 1;
     }
@@ -129,31 +121,16 @@ int main(int argc, char** argv) {
         glClearColor(0.0, 0.75, 1.0, 1.0); // Set clear colour in RGBA
         glClear(GL_COLOR_BUFFER_BIT); // Can also be GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT
 
-        // Get green value
-        float timeValue = glfwGetTime();
-        float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
-        // Assign green value to "ourColor" uniform
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        // Use shader program
         glUseProgram(shaderProgram);
-        if (vertexColorLocation >= 0)
-        { // Ensure uniform is valid before updating it
-            glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-        }
-
-        // Bind vertex array and index buffer
         glBindVertexArray(VAO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Use EBO
         // FINALLY DRAW THAT SHITE
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // Display rendered frame while waiting for the other frame to render
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    // Release bindings
-    glBindVertexArray(0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Release all GLFW resources and exit
     glfwTerminate();

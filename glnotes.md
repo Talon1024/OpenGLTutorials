@@ -178,6 +178,12 @@ glEnableVertexAttribArray(0);
 glBindBuffer(GL_ARRAY_BUFFER, 0);
 glBindVertexArray(0);
 ```
+For vertex buffers containing more than one attribute, such as both positions and colours, you need to add more vertex attribute pointers. Note that offsets are given to glVertexAttribPointer in *bytes*, not elements, so use sizeof(float) * e where e is the number of floats per element to calculate the strides and offsets.
+
+As for an example of how to do this:
+```
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*) (3 * sizeof(float)) );
+```
 
 Drawing stuff (FINALLY!!!)
 ==========================
