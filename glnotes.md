@@ -133,7 +133,23 @@ void main()
 }
 ```
 
-You can also send data into the shader from the CPU by using uniforms. Uniforms are global for each shader program (a vertex and fragment shader linked together)
+You can also send data into the shader from the CPU by using uniforms. Uniforms are global for each shader program (a vertex and fragment shader linked together).
+Uniforms must be queried and set AFTER the shader program is linked and used, and uniforms have to be updated in the render loop. This is how:
+```
+// Calculate uniform value (for example, a pulsating shade of green based on how much time the app has been running)
+float timeValue = glfwGetTime();
+float greenValue = (std::sin(timeValue) / 2.0f) + 0.5f;
+// Assign uniform value to the "ourColor" uniform
+// which was declared in the fragment shader by this line:
+// uniform vec4 ourColor;
+int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+glUseProgram(shaderProgram);
+if (vertexColorLocation >= 0)
+{ // Ensure uniform is valid before updating it
+    // NOW set the uniform
+    glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+}
+```
 
 Vertex buffers
 ==============
