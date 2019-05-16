@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 
 // Tutorial 2: Hello Triangle
+// Part 2: A square. Mainly for comparison with tut2.cpp
 // https://learnopengl.com/Getting-started/Hello-Triangle
 
 bool compileShader(const char* filename, unsigned int type, unsigned int &id);
@@ -41,12 +42,17 @@ int main(int argc, char** argv) {
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetErrorCallback(error_callback);
-    
+
     // Define vertex array
     float vertices[] = {
-        -0.5, -0.5, 0.0,
-        0.5, -0.5, 0.0,
-        0.0, 0.5, 0.0,
+        // first triangle
+         0.5,  0.5, 0.0,  // top right
+         0.5, -0.5, 0.0,  // bottom right
+        -0.5,  0.5, 0.0,  // top left 
+        // second triangle
+         0.5, -0.5,  0.0,  // bottom right
+        -0.5, -0.5,  0.0,  // bottom left
+        -0.5,  0.5,  0.0   // top left
     };
 
     unsigned int VAO;
@@ -115,7 +121,7 @@ int main(int argc, char** argv) {
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         // FINALLY DRAW THAT SHITE
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // Display rendered frame while waiting for the other frame to render
         glfwSwapBuffers(window);
