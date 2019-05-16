@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 
 // Tutorial 2: Hello Triangle
-// Part 2: A square. Mainly for comparison with tut2.cpp
+// Part 2: A rectangle. Mainly for comparison with tut2.cpp
 // https://learnopengl.com/Getting-started/Hello-Triangle
 
 bool compileShader(const char* filename, unsigned int type, unsigned int &id);

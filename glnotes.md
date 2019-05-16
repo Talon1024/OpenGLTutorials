@@ -1,33 +1,34 @@
 Rendering stuff using modern OpenGL
-
+===================================
 1. Generate an object ID for OpenGL
 ```
 unsigned int objectId = 0;
 glGenObject(1, &objectId);
 ```
 
-2. Bind the object to the target
+2. Bind the object ID to the thing you're working with
 ```
 glBindObject(GL_WINDOW_TARGET, objectId);
 ```
 
-3. Set the options for the object
+3. Set the options for the thing you're working with
 ```
 glSetObjectOption(GL_WINDOW_TARGET, GL_OPTION_WINDOW_WIDTH, 800);
 glSetObjectOption(GL_WINDOW_TARGET, GL_OPTION_WINDOW_HEIGHT, 600);
 ```
 
-4. Unbind the object from the target
+4. Unbind the object ID from the thing
 ```
 glBindObject(GL_WINDOW_TARGET, 0);
 ```
 
 Set the viewport
-
+----------------
 `glViewport(GLint x, GLint y, GLsizei width, GLsizei height)`
 Example: `glViewport(0, 0, 800, 600)`
 
 Graphics pipeline steps
+=======================
 1. Vertices have vertex attributes
 2. The vertex shader takes these attributes and manipulates them
 3. The OpenGL implementation (graphics driver) assembles primitives given the vertex data from the vertex shader and hints about it e.g. primitive type.
@@ -37,6 +38,7 @@ Graphics pipeline steps
 7. The rendered object is blended in with the scene
 
 Normalized device coordinates
+=============================
 It's a bit hard to draw this diagram with just ASCII art, but I tried my best.
 ```
 Z = 0
@@ -91,6 +93,47 @@ glLinkProgram(shaderProgram);
 ```
 In the code that renders the scene: `glUseProgram();`
 After you're done with the shaders: `glDeleteShader(shaderId);`
+
+GLSL
+----
+This is the language used to write 'shaders' (programs which manipulate vectors) for OpenGL. A shader always begins with a version number and has a main() function. You can also pass various data to/from the shader using ins, outs, and uniforms.
+
+Each input variable to a vertex shader is a vertex attribute. Here's how you can get the maximum number of vertex attributes the hardware supports:
+```
+int nrAttributes;
+glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
+```
+GLSL has integer, unsigned integer, floating point, and boolean types in addition to vector types corresponding to each of the previous types. Vectors' components can be accessed using XYZW for 3D coordinates, or RGBA for colours, or STPQ for UV coordinates.
+
+You can do swizzling by randomly choosing components of one vector to be used as the components of another. Just don't forget that you can't access the z/b/p component of a 2D vector or the w/a/q component of a 3D vector.
+
+You can send data from one shader to another using in/out variables with the same name. In the following example, vertexColor is set in the vertex shader, and received by the fragment shader.
+```
+This is the vertex shader:
+#version 330 core
+layout (location = 0) in vec3 aPos; // the position variable has attribute position 0
+  
+out vec4 vertexColor; // specify a color output to the fragment shader
+
+void main()
+{
+    gl_Position = vec4(aPos, 1.0); // see how we directly give a vec3 to vec4's constructor
+    vertexColor = vec4(0.5, 0.0, 0.0, 1.0); // set the output variable to a dark-red color
+}
+
+This is the fragment shader:
+#version 330 core
+out vec4 FragColor;
+  
+in vec4 vertexColor; // the input variable from the vertex shader (same name and same type)  
+
+void main()
+{
+    FragColor = vertexColor;
+}
+```
+
+You can also send data into the shader from the CPU by using uniforms. Uniforms are global for each shader program (a vertex and fragment shader linked together)
 
 Vertex buffers
 ==============

@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 
 // Tutorial 2: Hello Triangle
-// Part 2: A square. Mainly for comparison with tut2.cpp
+// Part 3: Element buffer objects + rectangle
 // https://learnopengl.com/Getting-started/Hello-Triangle
 
 bool compileShader(const char* filename, unsigned int type, unsigned int &id);
