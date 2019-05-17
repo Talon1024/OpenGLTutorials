@@ -38,9 +38,14 @@ config.set('TUT3_FRAGMENT_SHADER', '"tut3.fp"')
 config.set('TUT32_FRAGMENT_SHADER', '"tut3.2.fp"')
 config.set('TUT33_VERTEX_SHADER', '"tut3.3.vp"')
 config.set('TUT33_FRAGMENT_SHADER', '"tut3.3.fp"')
+config.set('TUT332_VERTEX_SHADER', '"tut3.3.2.vp"')
+config.set('TUT332_FRAGMENT_SHADER', '"tut3.3.2.fp"')
 executable('tut3.1', 'tut3.1.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
 executable('tut3.2', 'tut3.2.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
 executable('tut3.3', 'tut3.3.cpp', 'shader.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
-run_command('cp', ['-t', meson.build_root(), files('tut3.fp', 'tut3.2.fp', 'tut3.vp', 'tut3.3.vp', 'tut3.3.fp')])
+executable('tut3.3.2', 'tut3.3.2.cpp', 'shader.cpp', dependencies: [opengl, glfw, thread, xorg, xrandr, xi, glad_dep], link_args: ['-ldl'])
+run_command('cp', ['-t', meson.build_root(), files('tut3.fp', 'tut3.2.fp', 'tut3.vp', 'tut3.3.vp', 'tut3.3.fp', 'tut3.3.2.vp', 'tut3.3.2.fp')])
+
+
 
 configure_file(output: 'config.h', configuration: config)
