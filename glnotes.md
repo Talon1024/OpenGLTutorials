@@ -134,7 +134,7 @@ void main()
 ```
 
 You can also send data into the shader from the CPU by using uniforms. Uniforms are global for each shader program (a vertex and fragment shader linked together).
-Uniforms must be queried and set AFTER the shader program is linked and used, and uniforms have to be updated in the render loop. This is how:
+Uniforms must be queried and set AFTER the shader program is linked, and uniforms can be updated in the render loop. This is how:
 ```
 // Calculate uniform value (for example, a pulsating shade of green based on how much time the app has been running)
 float timeValue = glfwGetTime();
@@ -150,6 +150,7 @@ if (vertexColorLocation >= 0)
     glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 }
 ```
+The name of an OpenGL function to set specific uniforms generally has the form `glUniform(1|2|3|4)(f|i)`, where f/i is the type and 1/2/3/4 is the number of parameters the function takes.
 
 Vertex buffers
 ==============
