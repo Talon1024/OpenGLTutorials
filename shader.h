@@ -24,5 +24,6 @@ public:
         return usable;
     }
 
+    bool setUniform(const char* name, float x);
     bool setVec4Uniform(const char* name, float x, float y, float z, float w);
 };

@@ -122,6 +122,17 @@ bool KShaderProgram::compileShader(const char* filename, unsigned int type, unsi
     return true;
 }
 
+bool KShaderProgram::setUniform(const char* name, float x)
+{
+    int uniformLocation = glGetUniformLocation(programId, name);
+    if (uniformLocation >= 0)
+    {
+        glUniform1f(uniformLocation, x);
+        return true;
+    }
+    return false;
+}
+
 bool KShaderProgram::setVec4Uniform(const char* name, float x, float y, float z, float w)
 {
     int uniformLocation = glGetUniformLocation(programId, name);

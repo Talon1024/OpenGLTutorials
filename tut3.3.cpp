@@ -3,6 +3,7 @@
 #include "config.h"
 #include <iostream>
 #include "shader.h"
+#include <cmath>
 
 // Tutorial 3: GLSL shaders and uniforms
 // Part 3: More attributes
@@ -90,6 +91,8 @@ int main(int argc, char** argv) {
             glClear(GL_COLOR_BUFFER_BIT); // Can also be GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT
 
             // Use shader program
+            float timeValue = glfwGetTime();
+            theShader.setUniform("xOffset", std::sin(timeValue));
             theShader.use();
             glBindVertexArray(VAO);
             // FINALLY DRAW THAT SHITE
