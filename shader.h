@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 class KShaderProgram
 {
 protected:
@@ -8,6 +10,8 @@ protected:
     unsigned int fragmentId;
     static KShaderProgram *currentProgram;
     bool usable;
+    // Map of names to uniforms
+    std::unordered_map<const char*, int> uniformMap;
 
     bool compileShader(const char* source, unsigned int type, unsigned int &id);
 public:
