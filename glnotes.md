@@ -258,11 +258,14 @@ The images have to be loaded from image files, then uploaded to the GPU, and put
 
 sampler2D uniforms in the shaders are always set to texture unit 0 by default. Use glUniform1i to set the texture unit for the sampler2D to something other than 0.
 
+I noticed that you have to set the texture units for the sampler2D uniforms for every frame you render. However, the solutions to the OpenGL tutorials do not do it that way, but instead they set the texture units BEFORE the render loop. Maybe it's a problem or a quirk with NVidia's drivers?
+
 Textures can have smaller versions of themselves called mipmaps. This allows textures to scale down neatly at a distance.
 
 To prepare a texture:
 1. Load the image file for the texture
 2. Allocate the texture using `glGenTextures(1, &texture);`
+3. Set the texture's texture unit using `glActiveTexture(GL_TEXTURE0-15);`
 3. Bind the texture using `glBindTexture(GL_TEXTURE_2D, texture);`
 4. Upload the texture to the GPU using `glTexImage2D(GL_TEXTURE_2D, curLod, internalFormat, width, height, 0, dataFormat, dataType, data);
 5. Set up the texture using `glTexParameteri(GL_TEXTURE_2D, paramToSet, paramValue);`

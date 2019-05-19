@@ -52,6 +52,8 @@ run_command('cp', ['-t', meson.build_root(), files('tut3.fp', 'tut3.2.fp', 'tut3
 executable('tut4', 'tut4.cpp', 'shader.cpp', dependencies: deplist, link_args: ['-ldl'])
 executable('tut4.2', 'tut4.2.cpp', 'shader.cpp', dependencies: deplist, link_args: ['-ldl'])
 executable('tut4.3', 'tut4.3.cpp', 'shader.cpp', dependencies: deplist, link_args: ['-ldl'])
-run_command('cp', ['-t', meson.build_root(), files('tut4.vp', 'tut4.fp', 'tut4.2.fp', 'tut4.2.1.fp', 'dirbri18.png', 'awesomeface.png')])
+executable('tut4.4', 'tut4.4.cpp', 'shader.cpp', dependencies: deplist, link_args: ['-ldl'])
+executable('tut4.5', 'tut4.5.cpp', 'shader.cpp', dependencies: deplist, link_args: ['-ldl'])
+run_command('cp', ['-t', meson.build_root(), files('tut4.vp', 'tut4.fp', 'tut4.2.fp', 'tut4.2.1.fp', 'tut4.5.fp', 'dirbri18.png', 'awesomeface.png')])
 
 configure_file(output: 'config.h', configuration: config)
