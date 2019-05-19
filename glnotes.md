@@ -193,8 +193,9 @@ As for an example of how to do this:
 ```
 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*) (3 * sizeof(float)) );
 ```
-
 As for why the second attribute is the colour? The vertex shader decides what to do with it.
+The arguments for glVertexAttribPointer are as follows:
+`glVertexAttribPointer(arrayIndex, numElements, elementType, normalized, stride, offset);`
 
 Drawing stuff (FINALLY!!!)
 ==========================
@@ -248,3 +249,27 @@ const char* renderer = glGetString(GL_RENDERER);
 const char* glversion = glGetString(GL_VERSION);
 std::cout << "Renderer: " << renderer << std::endl << "OpenGL Version: " << glversion << std::endl;
 ```
+
+Texturing
+=========
+Textures are images that are mapped to the polygons that make up a 3D model.
+
+The images have to be loaded from image files, then uploaded to the GPU, and put into texture units. There may be more than one texture unit per object.
+
+sampler2D uniforms in the shaders are always set to texture unit 0 by default. Use glUniform1i to set the texture unit for the sampler2D to something other than 0.
+
+Textures can have smaller versions of themselves called mipmaps. This allows textures to scale down neatly at a distance.
+
+To prepare a texture:
+1. Load the image file for the texture
+2. Allocate the texture using `glGenTextures(1, &texture);`
+3. Bind the texture using `glBindTexture(GL_TEXTURE_2D, texture);`
+4. Upload the texture to the GPU using `glTexImage2D(GL_TEXTURE_2D, curLod, internalFormat, width, height, 0, dataFormat, dataType, data);
+5. Set up the texture using `glTexParameteri(GL_TEXTURE_2D, paramToSet, paramValue);`
+6. Optionally generate mipmaps for the texture using `glGenerateMipmap(GL_TEXTURE_2D);`
+
+To render an object using two textures:
+1. Use `glActiveTexture(GL_TEXTURE0-15);` to set the active texture unit
+2. Use `glBindTexture(GL_TEXTURE_2D, textureId);` to put the texture into the texture unit
+
+Delete textures using `glDeleteTextures(x, ptxIds);`

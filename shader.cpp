@@ -114,7 +114,7 @@ bool KShaderProgram::compileShader(const char* filename, unsigned int type, unsi
     if (!success)
     {
         glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-        std::cerr << "Cannot compile " << shaderType << " shader for some reason!" << std::endl << infoLog << std::endl;
+        std::cerr << "Cannot compile " << shaderType << " shader " << filename << " for some reason!" << std::endl << infoLog << std::endl;
         return false;
     }
     id = vertexShader;
@@ -133,12 +133,45 @@ bool KShaderProgram::setUniform(const char* name, float x)
     return false;
 }
 
-bool KShaderProgram::setVec4Uniform(const char* name, float x, float y, float z, float w)
+bool KShaderProgram::setUniform(const char* name, float x, float y)
+{
+    int uniformLocation = glGetUniformLocation(programId, name);
+    if (uniformLocation >= 0)
+    {
+        glUniform2f(uniformLocation, x, y);
+        return true;
+    }
+    return false;
+}
+
+bool KShaderProgram::setUniform(const char* name, float x, float y, float z)
+{
+    int uniformLocation = glGetUniformLocation(programId, name);
+    if (uniformLocation >= 0)
+    {
+        glUniform3f(uniformLocation, x, y, z);
+        return true;
+    }
+    return false;
+}
+
+bool KShaderProgram::setUniform(const char* name, float x, float y, float z, float w)
 {
     int uniformLocation = glGetUniformLocation(programId, name);
     if (uniformLocation >= 0)
     {
         glUniform4f(uniformLocation, x, y, z, w);
+        return true;
+    }
+    return false;
+}
+
+bool KShaderProgram::setUniform(const char* name, int x)
+{
+    int uniformLocation = glGetUniformLocation(programId, name);
+    if (uniformLocation >= 0)
+    {
+        glUniform1i(uniformLocation, x);
         return true;
     }
     return false;
