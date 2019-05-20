@@ -14,6 +14,7 @@ protected:
     std::unordered_map<const char*, int> uniformMap;
 
     bool compileShader(const char* source, unsigned int type, unsigned int &id);
+    int getUniformLocation(const char* name);
 public:
     KShaderProgram(const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
     ~KShaderProgram();

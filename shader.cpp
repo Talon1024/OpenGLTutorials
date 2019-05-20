@@ -122,7 +122,7 @@ bool KShaderProgram::compileShader(const char* filename, unsigned int type, unsi
     return true;
 }
 
-bool KShaderProgram::setUniform(const char* name, float x)
+int KShaderProgram::getUniformLocation(const char* name)
 {
     int uniformLocation;
     auto uniformInMap = uniformMap.find(name);
@@ -135,6 +135,12 @@ bool KShaderProgram::setUniform(const char* name, float x)
     {
         uniformLocation = uniformInMap->second;
     }
+    return uniformLocation;
+}
+
+bool KShaderProgram::setUniform(const char* name, float x)
+{
+    int uniformLocation = getUniformLocation(name);
     if (uniformLocation >= 0)
     {
         glUniform1f(uniformLocation, x);
@@ -145,17 +151,7 @@ bool KShaderProgram::setUniform(const char* name, float x)
 
 bool KShaderProgram::setUniform(const char* name, float x, float y)
 {
-    int uniformLocation;
-    auto uniformInMap = uniformMap.find(name);
-    if (uniformInMap == uniformMap.end()) // Not found
-    {
-        uniformLocation = glGetUniformLocation(programId, name);
-        uniformMap.emplace(name, uniformLocation);
-    }
-    else
-    {
-        uniformLocation = uniformInMap->second;
-    }
+    int uniformLocation = getUniformLocation(name);
     if (uniformLocation >= 0)
     {
         glUniform2f(uniformLocation, x, y);
@@ -166,17 +162,7 @@ bool KShaderProgram::setUniform(const char* name, float x, float y)
 
 bool KShaderProgram::setUniform(const char* name, float x, float y, float z)
 {
-    int uniformLocation;
-    auto uniformInMap = uniformMap.find(name);
-    if (uniformInMap == uniformMap.end()) // Not found
-    {
-        uniformLocation = glGetUniformLocation(programId, name);
-        uniformMap.emplace(name, uniformLocation);
-    }
-    else
-    {
-        uniformLocation = uniformInMap->second;
-    }
+    int uniformLocation = getUniformLocation(name);
     if (uniformLocation >= 0)
     {
         glUniform3f(uniformLocation, x, y, z);
@@ -187,17 +173,7 @@ bool KShaderProgram::setUniform(const char* name, float x, float y, float z)
 
 bool KShaderProgram::setUniform(const char* name, float x, float y, float z, float w)
 {
-    int uniformLocation;
-    auto uniformInMap = uniformMap.find(name);
-    if (uniformInMap == uniformMap.end()) // Not found
-    {
-        uniformLocation = glGetUniformLocation(programId, name);
-        uniformMap.emplace(name, uniformLocation);
-    }
-    else
-    {
-        uniformLocation = uniformInMap->second;
-    }
+    int uniformLocation = getUniformLocation(name);
     if (uniformLocation >= 0)
     {
         glUniform4f(uniformLocation, x, y, z, w);
@@ -208,17 +184,7 @@ bool KShaderProgram::setUniform(const char* name, float x, float y, float z, flo
 
 bool KShaderProgram::setUniform(const char* name, int x)
 {
-    int uniformLocation;
-    auto uniformInMap = uniformMap.find(name);
-    if (uniformInMap == uniformMap.end()) // Not found
-    {
-        uniformLocation = glGetUniformLocation(programId, name);
-        uniformMap.emplace(name, uniformLocation);
-    }
-    else
-    {
-        uniformLocation = uniformInMap->second;
-    }
+    int uniformLocation = getUniformLocation(name);
     if (uniformLocation >= 0)
     {
         glUniform1i(uniformLocation, x);
