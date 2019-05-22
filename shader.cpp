@@ -3,12 +3,16 @@
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Static members are initialized outside of the constructor
 KShaderProgram* KShaderProgram::currentProgram = nullptr;
 
 KShaderProgram::KShaderProgram(const char* vertexShaderFilePath, const char* fragmentShaderFilePath)
 {
+    // Required according to the terms of the Happy Bunny License (Modified MIT license)
+    std::cout << "GLM: Copyright (c) 2005 - G-Truc Creation" << std::endl;
     usable = true;
     if (!compileShader(vertexShaderFilePath, GL_VERTEX_SHADER, vertexId))
     {
@@ -188,6 +192,17 @@ bool KShaderProgram::setUniform(const char* name, int x)
     if (uniformLocation >= 0)
     {
         glUniform1i(uniformLocation, x);
+        return true;
+    }
+    return false;
+}
+
+bool KShaderProgram::setUniform(const char* name, glm::mat4 matrix)
+{
+    int uniformLocation = getUniformLocation(name);
+    if (uniformLocation >= 0)
+    {
+        glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, glm::value_ptr(matrix));
         return true;
     }
     return false;

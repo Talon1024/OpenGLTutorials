@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <glm/glm.hpp>
 
 class KShaderProgram
 {
@@ -34,4 +35,5 @@ public:
     bool setUniform(const char* name, float x, float y, float z);
     bool setUniform(const char* name, float x, float y, float z, float w);
     bool setUniform(const char* name, int x);
+    bool setUniform(const char* name, glm::mat4 matrix);
 };
