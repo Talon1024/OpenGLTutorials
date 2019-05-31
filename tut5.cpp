@@ -5,6 +5,9 @@
 #include "shader.h"
 #include <cmath>
 #include "kmatrix.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Use stb_image.h
 #define STB_IMAGE_IMPLEMENTATION
@@ -18,10 +21,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void error_callback(int error, const char* description);
 void processInput(GLFWwindow *window);
 
+/*
 const double PI = 3.14159265358979323846264338327950288419716939937510;
 float degToRad(float degrees) { return degrees / (180 / PI); }
 float radToDeg(float radians) { return radians * (180 / PI); }
-void printMatrix(const KMatrix &mtx);
+// void printMatrix(const KMatrix &mtx);
+*/
 
 int main(int argc, char** argv) {
     // Set GLFW hints so that OpenGL version 3.3 is used
@@ -51,19 +56,18 @@ int main(int argc, char** argv) {
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetErrorCallback(error_callback);
-    
-    // Define vertex array
+
     // Define vertex array
     float vertices[] = {
         // positions     // colours     // uvs
-         0.0,  0.5, 0.0, 1.0, 0.0, 0.0, 0.5, 0.0,  // top right
+         0.5,  0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,  // top right
          0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, // bottom right
         -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, // bottom left
-        // -0.5,  0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, // top left 
+        -0.5,  0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, // top left 
     };
     unsigned int indices[] = {  // note that we start from 0!
-        0, 1, 2,   // first triangle
-        // 1, 2, 3    // second triangle
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
     };
 
     unsigned int VAO;
@@ -124,13 +128,48 @@ int main(int argc, char** argv) {
     }
     // Free texture from memory
     stbi_image_free(data);
-    
-    KMatrix identity = KMatrix::Identity();
-    KMatrix trans = KMatrix::Translation(1, 1, 0);
-    KMatrix scale = KMatrix::Scale(.5, .5, .5);
-    KMatrix rot = KMatrix::Rotation(degToRad(90), 0, 0);
-    KMatrix transform = trans * scale * rot;
 
+    // Load another texture
+    data = stbi_load("awesomeface.png", &width, &height, &channels, 0);
+    unsigned int otherTex;
+    if (data)
+    {
+        // Create GL texture
+        glGenTextures(1, &otherTex);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, otherTex);
+        // Upload to GPU, set parameters, and generate mipmaps (lower res versions of the texture)
+        int texFormat = channels == 3 ? GL_RGB : GL_RGBA;
+        glTexImage2D(GL_TEXTURE_2D, 0, texFormat, width, height, 0, texFormat, GL_UNSIGNED_BYTE, data);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        // Release bindings
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    else
+    {
+        std::cerr << "Failed to load awesomeface.png for some reason!" << std::endl;
+    }
+
+    // GLM-based transformation
+    glm::vec4 vec(1.0, 0.0, 0.0, 1.0);
+    glm::mat4 trans(1.0);
+    trans = glm::rotate(trans, (float) glm::radians(90.0), glm::vec3(0.0, 0.0, 1.0));
+    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+
+    /*
+    // KMatrix-based transformation
+    KMatrix rot = KMatrix::Rotation(degToRad(90), 0, 0);
+    KMatrix scale = KMatrix::Scale(.5, .5, .5);
+    trans = rot * scale;
+    trans = trans.Transpose();
+    */
+
+    /*
     std::cout << "Identity matrix" << std::endl;
     printMatrix(identity);
     std::cout << "Translation matrix" << std::endl;
@@ -141,9 +180,10 @@ int main(int argc, char** argv) {
     printMatrix(rot);
     std::cout << "Combined transformation" << std::endl;
     printMatrix(transform);
+    */
 
     {
-        KShaderProgram theShader("tut5.vp", "tut4.fp");
+        KShaderProgram theShader("tut5.vp", "tut4.2.fp");
         // Render loop - do not quit until I quit
         while (!glfwWindowShouldClose(window))
         {
@@ -151,19 +191,25 @@ int main(int argc, char** argv) {
             processInput(window);
 
             // Render stuff
-            glClearColor(0.0, 0.75, 1.0, 1.0); // Set clear colour in RGBA
-            glClear(GL_COLOR_BUFFER_BIT); // Can also be GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT
+            glClearColor(0.0, 0.75, 1.0, 1.0);
+            glClear(GL_COLOR_BUFFER_BIT);
 
             // Use shader program
             theShader.use();
-            float timeValue = glfwGetTime();
-            transform = KMatrix::Translation(0, std::sin(timeValue), 0);
-            theShader.setUniform("transform", transform);
+            glm::mat4 trans = glm::mat4(1.0f);
+            trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0.0));
+            trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
+            theShader.setUniform("ourTexture", 0);
+            theShader.setUniform("gratexture", 1);
+            theShader.setUniform("transform", trans);
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, otherTex);
             glBindVertexArray(VAO);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
             // FINALLY DRAW THAT SHITE
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             // Display rendered frame while waiting for the other frame to render
             glfwSwapBuffers(window);
@@ -176,6 +222,7 @@ int main(int argc, char** argv) {
     return 0;
 }
 
+/*
 void printMatrix(const KMatrix &mtx)
 {
     for (unsigned int row = 0; row < mtx.GetRows(); row++)
@@ -187,6 +234,7 @@ void printMatrix(const KMatrix &mtx)
         std::cout << std::endl;
     }
 }
+*/
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {

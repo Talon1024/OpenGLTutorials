@@ -16,9 +16,11 @@ public:
     void SetEntry(unsigned int row, unsigned int col, float value);
     const unsigned int GetRows() const { return rows; }
     const unsigned int GetCols() const { return cols; }
+    const unsigned int GetSize() const { return rows * cols; }
     const bool IsNull() const { return rows > 0 && cols > 0; }
     const float* GetEntryPtr() { return entries.data(); }
     KMatrix operator* (const KMatrix &other) const;
+    KMatrix Transpose();
     static KMatrix Identity();
     static KMatrix Scale(float x, float y, float z);
     static KMatrix Translation(float x, float y, float z);
