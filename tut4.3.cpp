@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
     }
 
     {
-        KShaderProgram theShader("tut4.vp", "tut4.2.1.fp");
+        KShaderProgram theShader("tut4.vp", "tut4.3.fp");
         // Render loop - do not quit until I quit
         while (!glfwWindowShouldClose(window))
         {

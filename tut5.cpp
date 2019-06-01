@@ -21,12 +21,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void error_callback(int error, const char* description);
 void processInput(GLFWwindow *window);
 
-/*
 const double PI = 3.14159265358979323846264338327950288419716939937510;
 float degToRad(float degrees) { return degrees / (180 / PI); }
 float radToDeg(float radians) { return radians * (180 / PI); }
-// void printMatrix(const KMatrix &mtx);
-*/
+void printMatrix(const KMatrix &mtx);
 
 int main(int argc, char** argv) {
     // Set GLFW hints so that OpenGL version 3.3 is used
@@ -155,17 +153,19 @@ int main(int argc, char** argv) {
         std::cerr << "Failed to load awesomeface.png for some reason!" << std::endl;
     }
 
+    /*
     // GLM-based transformation
     glm::vec4 vec(1.0, 0.0, 0.0, 1.0);
     glm::mat4 trans(1.0);
     trans = glm::rotate(trans, (float) glm::radians(90.0), glm::vec3(0.0, 0.0, 1.0));
     trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+    */
 
     /*
     // KMatrix-based transformation
     KMatrix rot = KMatrix::Rotation(degToRad(90), 0, 0);
     KMatrix scale = KMatrix::Scale(.5, .5, .5);
-    trans = rot * scale;
+    KMatrix trans = rot * scale;
     trans = trans.Transpose();
     */
 
@@ -183,7 +183,7 @@ int main(int argc, char** argv) {
     */
 
     {
-        KShaderProgram theShader("tut5.vp", "tut4.2.fp");
+        KShaderProgram theShader("tut5.vp", "tut4.2.1.fp");
         // Render loop - do not quit until I quit
         while (!glfwWindowShouldClose(window))
         {
@@ -222,7 +222,6 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-/*
 void printMatrix(const KMatrix &mtx)
 {
     for (unsigned int row = 0; row < mtx.GetRows(); row++)
@@ -234,7 +233,6 @@ void printMatrix(const KMatrix &mtx)
         std::cout << std::endl;
     }
 }
-*/
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
