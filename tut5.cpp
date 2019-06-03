@@ -152,6 +152,7 @@ int main(int argc, char** argv) {
     {
         std::cerr << "Failed to load awesomeface.png for some reason!" << std::endl;
     }
+    stbi_image_free(data);
 
     /*
     // GLM-based transformation
