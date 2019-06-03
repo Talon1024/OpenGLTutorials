@@ -60,6 +60,8 @@ run_command('cp', ['-t', meson.build_root(), files('tut4.vp', 'tut4.fp', 'tut4.2
 
 # Tutorial 5: Transformations
 executable('tut5', 'tut5.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
+executable('tut5.1', 'tut5.1.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
+executable('tut5.2', 'tut5.2.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
 run_command('cp', ['-t', meson.build_root(), files('tut4.2.1.fp', 'tut5.vp')])
 
 configure_file(output: 'config.h', configuration: config)
