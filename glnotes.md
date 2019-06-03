@@ -276,3 +276,20 @@ To render an object using two textures:
 2. Use `glBindTexture(GL_TEXTURE_2D, textureId);` to put the texture into the texture unit
 
 Delete textures using `glDeleteTextures(x, ptxIds);`
+
+Transformations
+===============
+
+Transformations are done using matrices. A matrix can be multiplied by a vector to make a completely new vector. See KHAAAAAAN.txt for more info on matrices and matrix math.
+
+Pass a matrix as a uniform to a GLSL shader by doing this:
+
+```
+int uniformLocation = getUniformLocation(name);
+float* mtx;
+glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, mtx);
+```
+
+OpenGL matrices are in column-major order rather than row-major order, so you will need to replace GL_FALSE with GL_TRUE if the matrix is in row-major order.
+
+These transformations are used to take objects in the 3D world and put them into normalized device coordinates.

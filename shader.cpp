@@ -202,7 +202,7 @@ bool KShaderProgram::setUniform(const char* name, glm::mat4 matrix)
     int uniformLocation = getUniformLocation(name);
     if (uniformLocation >= 0)
     {
-            glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, glm::value_ptr(matrix));
+        glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, glm::value_ptr(matrix));
         return true;
     }
     return false;
@@ -213,7 +213,7 @@ bool KShaderProgram::setUniform(const char* name, KMatrix matrix)
     int uniformLocation = getUniformLocation(name);
     if (uniformLocation >= 0)
     {
-            glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, matrix.GetEntryPtr());
+        glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, matrix.GetEntryPtr());
         return true;
     }
     return false;
