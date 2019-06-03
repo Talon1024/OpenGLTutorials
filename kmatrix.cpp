@@ -1,17 +1,23 @@
 #include "kmatrix.h"
 #include <cstdarg>
+#include <cstring>
 #include <cmath>
 #include <vector>
+#include <iostream>
 
 KMatrix::KMatrix(unsigned int rows, unsigned int cols) : rows(rows), cols(cols)
 {
-    entries = std::vector<float>(rows * cols, 0.0);
+    // std::cout << "KMatrix Rows x Cols ctor " << this << std::endl;
+    //entries = std::vector<float>(rows * cols, 0.0);
+    entries = new float[rows * cols];
 }
 
 // Same as above but allows varargs
 KMatrix::KMatrix(unsigned int rows, unsigned int cols, unsigned int givenEntries...) : rows(rows), cols(cols)
 {
-    entries = std::vector<float>(rows * cols, 0.0);
+    // std::cout << "KMatrix Rows x Cols + entries ctor " << this << std::endl;
+    // entries = std::vector<float>(rows * cols, 0.0);
+    entries = new float[rows * cols];
     va_list entryvalues;
     unsigned int vaIndex = 0;
     va_start(entryvalues, givenEntries);
@@ -20,6 +26,37 @@ KMatrix::KMatrix(unsigned int rows, unsigned int cols, unsigned int givenEntries
         entries[vaIndex] = va_arg(entryvalues, double);
     }
     va_end(entryvalues);
+}
+
+KMatrix::KMatrix(const KMatrix &existing)
+{
+    // std::cout << "Copy constructor" << std::endl;
+    unsigned int rows = existing.GetRows();
+    unsigned int cols = existing.GetCols();
+    this->rows = rows;
+    this->cols = cols;
+    entries = new float[rows * cols];
+    std::memcpy(entries, existing.GetEntryPtr(), rows * cols * sizeof(float));
+}
+
+KMatrix& KMatrix::operator=(const KMatrix &existing)
+{
+    // std::cout << "Copy assignment operator" << std::endl;
+    if (this != &existing)
+    {
+        this->rows = existing.GetRows();
+        this->cols = existing.GetCols();
+        delete[] entries;
+        entries = new float[this->rows * this->cols];
+        std::memcpy(entries, existing.GetEntryPtr(), rows * cols * sizeof(float));
+    }
+    return *this;
+}
+
+KMatrix::~KMatrix()
+{
+    delete[] entries;
+    // std::cout << "KMatrix dtor " << this << std::endl;
 }
 
 const float KMatrix::GetEntry(unsigned int at) const
@@ -44,13 +81,13 @@ void KMatrix::SetEntry(unsigned int row, unsigned int col, float value)
     entries[at] = value;
 }
 
-KMatrix KMatrix::operator* (const KMatrix &other) const
+KMatrix KMatrix::operator* (const KMatrix &other)
 {
     if (cols == other.GetRows())
     {
         unsigned int resultRows = rows;
         unsigned int resultCols = other.GetCols();
-        KMatrix result(resultRows, resultCols);
+        KMatrix&& result = KMatrix(resultRows, resultCols);
         for (unsigned int row = 0; row < resultRows; row++)
         {
             for (unsigned int col = 0; col < resultCols; col++)
@@ -63,7 +100,7 @@ KMatrix KMatrix::operator* (const KMatrix &other) const
                 result.SetEntry(row, col, curEntry);
             }
         }
-        return result;
+        return KMatrix(result);
     }
     return KMatrix(0, 0);
 }
@@ -87,7 +124,7 @@ KMatrix KMatrix::Transpose()
         unsigned int resultEntry = (entry * cols + entry / rows) % GetSize();
         result.SetEntry(resultEntry, entries[entry]);
     }
-    return result;
+    return KMatrix(result);
 }
 
 KMatrix KMatrix::Identity()
