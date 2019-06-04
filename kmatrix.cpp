@@ -81,13 +81,13 @@ void KMatrix::SetEntry(unsigned int row, unsigned int col, float value)
     entries[at] = value;
 }
 
-KMatrix KMatrix::operator* (const KMatrix &other)
+KMatrix KMatrix::operator* (const KMatrix &other) const
 {
     if (cols == other.GetRows())
     {
         unsigned int resultRows = rows;
         unsigned int resultCols = other.GetCols();
-        KMatrix&& result = KMatrix(resultRows, resultCols);
+        KMatrix result = KMatrix(resultRows, resultCols);
         for (unsigned int row = 0; row < resultRows; row++)
         {
             for (unsigned int col = 0; col < resultCols; col++)
@@ -103,6 +103,31 @@ KMatrix KMatrix::operator* (const KMatrix &other)
         return KMatrix(result);
     }
     return KMatrix(0, 0);
+}
+
+KMatrix& KMatrix::operator*= (const KMatrix &other)
+{
+    if (cols == other.GetRows())
+    {
+        unsigned int resultRows = rows;
+        unsigned int resultCols = other.GetCols();
+        float* resultEntries = new float[resultRows * resultCols];
+        for (unsigned int row = 0; row < resultRows; row++)
+        {
+            for (unsigned int col = 0; col < resultCols; col++)
+            {
+                float curEntry = 0;
+                for (unsigned int idx = 0; idx < cols; idx++)
+                {
+                    curEntry += GetEntry(row, idx) * other.GetEntry(idx, col);
+                }
+                resultEntries[row * resultCols + col] = curEntry;
+            }
+        }
+        delete[] entries;
+        entries = resultEntries;
+    }
+    return *this;
 }
 
 KMatrix KMatrix::Transpose()

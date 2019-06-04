@@ -23,7 +23,8 @@ public:
     const unsigned int GetSize() const { return rows * cols; }
     const bool IsNull() const { return rows > 0 && cols > 0; }
     const float* GetEntryPtr() const { return entries; }
-    KMatrix operator* (const KMatrix &other);
+    KMatrix operator* (const KMatrix &other) const;
+    KMatrix& operator*= (const KMatrix &other);
     KMatrix Transpose();
     static KMatrix Identity();
     static KMatrix Scale(float x, float y, float z);
