@@ -1,6 +1,6 @@
 #include "glad.h"
 #include <GLFW/glfw3.h>
-#include "config.h"
+
 #include <iostream>
 #include "shader.h"
 #include <cmath>
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
 
     {
         // Load and compile the vertex and fragment shaders
-        KShaderProgram theShader(TUT332_VERTEX_SHADER, TUT332_FRAGMENT_SHADER);
+        KShaderProgram theShader("tut3.3.2.vp", "tut3.3.2.fp");
 
         // Render loop - do not quit until I quit
         while (!glfwWindowShouldClose(window))

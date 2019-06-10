@@ -20,8 +20,6 @@ glm_path = include_directories('glm')
 glad_dep = declare_dependency(sources: [glad_targ], link_args: ['-ldl'])
 
 config = configuration_data()
-config.set('TUT2_VERTEX_SHADER', '"tut2.vp"')
-config.set('TUT2_FRAGMENT_SHADER', '"tut2.fp"')
 
 deplist = [opengl, glfw, thread, xorg, xrandr, xi, glad_dep]
 
@@ -37,13 +35,6 @@ executable('tut2.3', 'tut2.3.cpp', dependencies: deplist, link_args: ['-ldl'])
 run_command('cp', ['-t', meson.build_root(), files('tut2.fp', 'tut2.vp')])
 
 # Tutorial 3: GLSL shaders
-config.set('TUT3_VERTEX_SHADER', '"tut3.vp"')
-config.set('TUT3_FRAGMENT_SHADER', '"tut3.fp"')
-config.set('TUT32_FRAGMENT_SHADER', '"tut3.2.fp"')
-config.set('TUT33_VERTEX_SHADER', '"tut3.3.vp"')
-config.set('TUT33_FRAGMENT_SHADER', '"tut3.3.fp"')
-config.set('TUT332_VERTEX_SHADER', '"tut3.3.2.vp"')
-config.set('TUT332_FRAGMENT_SHADER', '"tut3.3.2.fp"')
 executable('tut3.1', 'tut3.1.cpp', dependencies: deplist, link_args: ['-ldl'])
 executable('tut3.2', 'tut3.2.cpp', dependencies: deplist, link_args: ['-ldl'])
 executable('tut3.3', 'tut3.3.cpp', 'shader.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
@@ -63,5 +54,3 @@ executable('tut5', 'tut5.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories:
 executable('tut5.1', 'tut5.1.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
 executable('tut5.2', 'tut5.2.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
 run_command('cp', ['-t', meson.build_root(), files('tut4.2.1.fp', 'tut5.vp')])
-
-configure_file(output: 'config.h', configuration: config)

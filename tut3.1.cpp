@@ -1,6 +1,6 @@
 #include "glad.h"
 #include <GLFW/glfw3.h>
-#include "config.h"
+
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
@@ -86,13 +86,13 @@ int main(int argc, char** argv) {
 
     // Load and compile the vertex and fragment shaders
     unsigned int vertexShader;
-    if (!compileShader(TUT3_VERTEX_SHADER, GL_VERTEX_SHADER, vertexShader))
+    if (!compileShader("tut3.vp", GL_VERTEX_SHADER, vertexShader))
     {
         // Error messages are printed inside compileShader
         return 1;
     }
     unsigned int fragmentShader;
-    if (!compileShader(TUT3_FRAGMENT_SHADER, GL_FRAGMENT_SHADER, fragmentShader))
+    if (!compileShader("tut3.fp", GL_FRAGMENT_SHADER, fragmentShader))
     {
         return 1;
     }
