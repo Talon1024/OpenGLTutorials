@@ -285,11 +285,19 @@ Transformations are done using matrices. A matrix can be multiplied by a vector 
 Pass a matrix as a uniform to a GLSL shader by doing this:
 
 ```
+void setMatrixUniform (const char* name, float* mtx) {
+...
 int uniformLocation = getUniformLocation(name);
-float* mtx;
 glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, mtx);
+}
 ```
 
 OpenGL matrices are in column-major order rather than row-major order, so you will need to replace GL_FALSE with GL_TRUE if the matrix is in row-major order.
 
-These transformations are used to take objects in the 3D world and put them into normalized device coordinates.
+These transformations are used to take vertices (that are part of objects) in the 3D world, and put them into normalized device (screen) coordinates. It works like this:
+1. Vertices are taken from local space (relative to the object, which has an XYZ position), and put into world space
+2. Vertices are taken from world space, and put into view space
+3. Vertices are *culled* by projecting a clip matrix onto them
+4. The remaining vertices are projected into view space again
+
+OpenGL has no concept of a camera, so in order to simulate a camera, you move everything in the entire scene instead. Do this by passing your world->NDC matrix chain as uniforms to your shader program.

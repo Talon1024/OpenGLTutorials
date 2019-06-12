@@ -54,3 +54,9 @@ executable('tut5', 'tut5.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories:
 executable('tut5.1', 'tut5.1.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
 executable('tut5.2', 'tut5.2.cpp', 'shader.cpp', 'kmatrix.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
 run_command('cp', ['-t', meson.build_root(), files('tut4.2.1.fp', 'tut5.vp')])
+
+# Tutorial 6: Coordinate systems
+executable('tut6', 'tut6.cpp', 'shader.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
+executable('tut6.1', 'tut6.1.cpp', 'shader.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
+executable('tut6.2', 'tut6.2.cpp', 'shader.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
+run_command('cp', ['-t', meson.build_root(), files('tut6.vp', 'tut6.fp')])
