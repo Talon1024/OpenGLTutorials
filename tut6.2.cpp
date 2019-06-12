@@ -152,6 +152,10 @@ int main(int argc, char** argv) {
     std::cout << "========== CONTROLS ==========" << std::endl <<
     "Move around: HJKLWS (vim keys LOL)" << std::endl <<
     "Zoom in/out: T/Y" << std::endl <<
+    "Expand vertically: up arrow" << std::endl <<
+    "Shrink vertically: down arrow" << std::endl <<
+    "Expand horizontally: right arrow" << std::endl <<
+    "Shrink horizontally: left arrow" << std::endl <<
     "More coming soon..." << std::endl;
 
     {
@@ -160,6 +164,8 @@ int main(int argc, char** argv) {
         float yOffset = 0.;
         float zOffset = -3.;
         float fov = 45.0;
+        float aspXfactor = 1.;
+        float aspYfactor = 1.;
         /*
         unsigned int ctlRectIdxBuf[] = {
             0, 1, 3, 1, 2, 3
@@ -205,6 +211,22 @@ int main(int argc, char** argv) {
             {
                 fov -= .5;
             }
+            if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+            {
+                aspYfactor -= 0.0625;
+            }
+            if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+            {
+                aspYfactor += 0.0625;
+            }
+            if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+            {
+                aspXfactor -= 0.0625;
+            }
+            if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+            {
+                aspXfactor += 0.0625;
+            }
 
             /*
             float ctlRectVBuf[] = {
@@ -221,7 +243,7 @@ int main(int argc, char** argv) {
 
             // Projection
             glm::mat4 projection(1.);
-            projection = glm::perspective(glm::radians(fov), ((float)screenWidth) / screenHeight, 0.1f, 100.f);
+            projection = glm::perspective(glm::radians(fov), ((float)screenWidth * aspXfactor) / ((float)screenHeight * aspYfactor), 0.1f, 100.f);
 
             // Use shader program
             theShader.use();
