@@ -32,7 +32,6 @@ struct tickParam
 
 #define GL // Use OpenGL for rendering
 #define CUBES
-#define CTL_EBO
 
 int main(int argc, char** argv) {
 
@@ -193,7 +192,7 @@ int main(int argc, char** argv) {
     SDL_Surface* controls = drawTextToSurface(
     "========== CONTROLS ==========\n"
     "Move around: HJKLWS (vim keys LOL)\n"
-    "Zoom in/out: T/Y\n"
+    "Zoom in/out: Y/T\n"
     "Expand vertically: Numpad 8\n"
     "Shrink vertically: Numpad 2\n"
     "Expand horizontally: Numpad 6\n"
@@ -203,7 +202,6 @@ int main(int argc, char** argv) {
 
 #ifdef GL
     unsigned int controlTexture = SDLSurfaceToGLImage(controls);
-#ifdef CTL_EBO
     float ctlVBuf[] = {
         -1., 1., 0.0, 0.0,
         1., 1., 1.0, 0.0,
@@ -214,16 +212,6 @@ int main(int argc, char** argv) {
         0, 1, 2,
         1, 2, 3,
     };
-#else
-    float ctlVBuf[] = {
-        -1., 1., 0., 0.,
-        1., 1., 1., 0.,
-        -1., -1., 0., 1.,
-        1., 1., 1., 0.,
-        -1., -1., 0., 1.,
-        1., -1., 1., 1.,
-    };
-#endif
 
     unsigned int ctlVAO;
     glGenVertexArrays(1, &ctlVAO);
@@ -234,12 +222,11 @@ int main(int argc, char** argv) {
     glBindBuffer(GL_ARRAY_BUFFER, ctlVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(ctlVBuf), ctlVBuf, GL_STATIC_DRAW);
 
-#ifdef CTL_EBO
     unsigned int ctlEBO;
     glGenBuffers(1, &ctlEBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctlEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ctlEBuf), ctlEBuf, GL_STATIC_DRAW);
-#endif
+
     // Give OpenGL information about how the vertex buffer data is presented
     // Vertex positions
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
@@ -250,9 +237,7 @@ int main(int argc, char** argv) {
 
     // Release bindings
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-#ifdef CTL_EBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-#endif
     glBindVertexArray(0);
 
 #else
@@ -332,14 +317,12 @@ int main(int argc, char** argv) {
                 (float)controls->w / screenWidth,
                 (float)controls->h / screenHeight,
             };
-            // std::cout << "uv2Scale " << uv2Scale[0] << " " << uv2Scale[1] << std::endl;
             glUniform2fv(uv2TransformationLocation, 1, uv2Scale);
             uv2TransformationLocation = shader2D.getUniformLocation("translate");
             float uv2Translate[] = {
                 -1 + uv2Scale[0],
                 1 - uv2Scale[1],
             };
-            // std::cout << "uv2Translate " << uv2Translate[0] << " " << uv2Translate[1] << std::endl;
             glUniform2fv(uv2TransformationLocation, 1, uv2Translate);
             shader2D.setUniform("theTexture", 0);
 
@@ -347,12 +330,8 @@ int main(int argc, char** argv) {
             glBindTexture(GL_TEXTURE_2D, controlTexture);
             glBindVertexArray(ctlVAO);
             glBindBuffer(GL_ARRAY_BUFFER, ctlVBO);
-#ifdef CTL_EBO
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctlEBO);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-#else
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-#endif
 #else
             SDL_Rect destRect { 0, 0, controls->w, controls->h };
             SDL_RenderCopy(renderer, controlTexture, nullptr, &destRect);
