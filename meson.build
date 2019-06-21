@@ -8,6 +8,8 @@ thread = dependency('threads')
 xorg = dependency('x11')
 xrandr = dependency('xrandr')
 xi = dependency('xi')
+sdl = dependency('SDL2')
+sdl_image = dependency('SDL2_image')
 
 glad_targ = custom_target('glad',
 input: 'dlglad.sh',
@@ -59,4 +61,5 @@ run_command('cp', ['-t', meson.build_root(), files('tut4.2.1.fp', 'tut5.vp')])
 executable('tut6', 'tut6.cpp', 'shader.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
 executable('tut6.1', 'tut6.1.cpp', 'shader.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
 executable('tut6.2', 'tut6.2.cpp', 'shader.cpp', include_directories: glm_path, dependencies: deplist, link_args: ['-ldl'])
-run_command('cp', ['-t', meson.build_root(), files('tut6.vp', 'tut6.fp')])
+executable('tut6.3', 'tut6.3.cpp', 'shader.cpp', include_directories: glm_path, dependencies: [opengl, sdl, sdl_image, glad_dep])
+run_command('cp', ['-t', meson.build_root(), files('tut6.vp', 'tut6.fp', '2d.vp', '2d.fp', 'bitmapfont.png')])

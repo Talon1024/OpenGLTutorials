@@ -218,3 +218,24 @@ bool KShaderProgram::setUniform(const char* name, KMatrix matrix)
     }
     return false;
 }
+
+bool KShaderProgram::setUniform(const char* name, unsigned int mtxDim, float* matrix)
+{
+    int uniformLocation = getUniformLocation(name);
+    if (uniformLocation >= 0)
+    {
+        if (mtxDim == 2)
+        {
+            glUniformMatrix2fv(uniformLocation, 1, GL_FALSE, matrix);
+        }
+        else if (mtxDim == 3)
+        {
+            glUniformMatrix3fv(uniformLocation, 1, GL_FALSE, matrix);
+        }
+        else if (mtxDim == 4)
+        {
+            glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, matrix);
+        }
+    }
+    return false;
+}

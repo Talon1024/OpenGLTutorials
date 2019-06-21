@@ -1,0 +1,16 @@
+#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aUv;
+
+out vec2 uv;
+invariant uv;
+
+// Position and scale
+uniform vec2 translate;
+uniform vec2 scale;
+
+void main()
+{
+    gl_Position = vec4(aPos * scale + translate, 0.0, 0.0);
+    uv = aUv;
+}
