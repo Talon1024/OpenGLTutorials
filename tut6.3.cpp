@@ -1,6 +1,7 @@
 #include "glad.h"
 
 #include <iostream>
+#include <cstring>
 #include "shader.h"
 #include <cmath>
 #include <glm/glm.hpp>
@@ -29,6 +30,149 @@ struct tickParam
 {
     unsigned int tick;
 };
+
+template<typename T> struct vector2
+{
+    T x;
+    T y;
+};
+
+vector2<unsigned int> getTextGridSize(const char* text);
+
+struct QuadGrid {
+    float* pos;
+    float* uv;
+    unsigned int* el;
+    // unsigned int elementCount;
+    unsigned int rows;
+    unsigned int cols;
+    QuadGrid(unsigned int rows, unsigned int cols) : rows(rows), cols(cols)
+    {
+        // 0   1
+        // +---+
+        // |  /|
+        // | / |
+        // |/  |
+        // +---+
+        // 2   3
+        // 0 1 2 1 2 3
+        float xFactor[] = { 0.0, 1.0, 0.0, 1.0 };
+        float yFactor[] = { 0.0, 0.0, 1.0, 1.0 };
+        unsigned int elements[] = { 0, 1, 2, 1, 2, 3 };
+        if (rows > 0 && cols > 0)
+        {
+            unsigned int quadCount = rows * cols;
+            // 4 vertices per quad, 2 values per vertex
+            pos = new float[quadCount * 8];
+            uv = new float[quadCount * 8];
+            // 3 vertices per triangle, 2 triangles per quad
+            el = new unsigned int[quadCount * 6];
+            unsigned int curVertex = 0;
+            unsigned int curElement = 0;
+            float xSize = (float)1 / cols * 2;
+            float ySize = (float)1 / rows * 2;
+            for (unsigned int row = 0; row < rows; row++)
+            {
+                for (unsigned int col = 0; col < cols; col++)
+                {
+                    float xPos = (float)col / cols * 2 - 1;
+                    float yPos = (float)row / rows * 2 - 1;
+                    for (unsigned int element = 0; element < 6; element++)
+                    {
+                        el[curElement++] = elements[element] + curVertex;
+                    }
+                    for (unsigned int vertex = 0; vertex < 4; vertex++)
+                    {
+                        pos[curVertex * 2] = xPos + xSize * xFactor[vertex];
+                        pos[curVertex * 2 + 1] = yPos + ySize * yFactor[vertex];
+                        uv[curVertex * 2] = xFactor[vertex];
+                        uv[curVertex * 2 + 1] = yFactor[vertex];
+                        curVertex++;
+                    }
+                }
+            }
+            // elementCount = curElement;
+        }
+    }
+};
+
+class FontTexture {
+private:
+    vector2<unsigned int> imageSize;
+    vector2<unsigned int> cellSize;
+    // Size of each cell as a percentage of the width/height
+    vector2<float> cellUv;
+    unsigned int textureId;
+public:
+    FontTexture(SDL_Surface* texture, vector2<unsigned int> cellSize, unsigned int texUnit = 0)
+    {
+        imageSize.x = texture->w;
+        imageSize.y = texture->h;
+        this->cellSize = cellSize;
+        cellUv.x = (float)cellSize.x / imageSize.x;
+        cellUv.y = (float)cellSize.y / imageSize.y;
+        textureId = SDLSurfaceToGLImage(texture, true, texUnit);
+        if(textureId == 0)
+        {
+            std::cerr << "Failed to convert the texture for some reason!" << std::endl;
+        }
+    }
+    ~FontTexture()
+    {
+        glDeleteTextures(1, &textureId);
+    }
+    // Delete copy constructor and copy assignment constructor
+    FontTexture(const FontTexture&) = delete;
+    FontTexture& operator= (const FontTexture&) = delete;
+    // Move and move assignment constructors
+    FontTexture(FontTexture&& previous)
+    {
+        this->imageSize = previous.imageSize;
+        this->cellSize = previous.cellSize;
+        this->cellUv = previous.cellUv;
+        this->textureId = previous.textureId;
+    }
+    FontTexture& operator= (FontTexture&& previous);
+    // UV coordinates for upper left corner of given byte
+    vector2<float> uvForChar(char ch) const;
+    vector2<float> getCellUv() const
+    {
+        return cellUv;
+    }
+    vector2<unsigned int> getCellSize() const
+    {
+        return cellSize;
+    }
+    unsigned int getTextureId() const
+    {
+        return textureId;
+    }
+};
+
+FontTexture& FontTexture::operator= (FontTexture&& previous)
+{
+    this->imageSize = previous.imageSize;
+    this->cellSize = previous.cellSize;
+    this->cellUv = previous.cellUv;
+    this->textureId = previous.textureId;
+    return *this;
+}
+
+vector2<float> FontTexture::uvForChar(char ch) const
+{
+    vector2<unsigned int> cells;
+    vector2<unsigned int> pos;
+    cells.x = imageSize.x / cellSize.x;
+    cells.y = imageSize.y / cellSize.y;
+    pos.x = ch / cells.y;
+    pos.y = ch % cells.x;
+    vector2<float> uv;
+    uv.x = cellUv.x * pos.x;
+    uv.y = cellUv.y * pos.y;
+    return uv;
+}
+
+void drawTextOnQuadGrid(const char* text, const FontTexture& fontexture, QuadGrid& grid);
 
 #define GL // Use OpenGL for rendering
 #define CUBES
@@ -240,6 +384,48 @@ int main(int argc, char** argv) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    FontTexture fontTexture(font, {8, 8}, GL_TEXTURE1);
+    const char* stTextFmt = "========== STATS ==========\n"
+        "X Offset: %0.4f\n"
+        "Y Offset: %0.4f\n"
+        "Z Offset: %0.4f\n"
+        "FOV: %0.4f degrees\n"
+        "Aspect Ratio X: %0.4f\n"
+        "Aspect Ratio Y: %0.4f\n"
+        "Yaw: %0.4f\n"
+        "Pitch: %0.4f\n";
+    vector2<unsigned int> stCells = getTextGridSize(stTextFmt);
+    char* stText = new char[stCells.x * stCells.y];
+    std::cout << "stCells " << stCells.x << " " << stCells.y << std::endl;
+    QuadGrid stQuad(stCells.y, stCells.x);
+    drawTextOnQuadGrid(stTextFmt, fontTexture, stQuad);
+
+    unsigned int stVAO;
+    glGenVertexArrays(1, &stVAO);
+    glBindVertexArray(stVAO);
+
+    unsigned int stData[] = {0, 0, 0};
+    unsigned int &stPosVBO = stData[0];
+    unsigned int &stUvVBO = stData[1];
+    unsigned int &stEBO = stData[2];
+    glGenBuffers(3, stData);
+    glBindBuffer(GL_ARRAY_BUFFER, stPosVBO);
+    glBufferData(GL_ARRAY_BUFFER, stQuad.rows * stQuad.cols * sizeof(float) * 8, stQuad.pos, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, stUvVBO);
+    glBufferData(GL_ARRAY_BUFFER, stQuad.rows * stQuad.cols * sizeof(float) * 8, stQuad.uv, GL_STREAM_DRAW);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, stEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, stQuad.rows * stQuad.cols * sizeof(unsigned int) * 6, stQuad.el, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
 #else
     SDL_Texture* controlTexture = SDL_CreateTextureFromSurface(renderer, controls);
 #endif
@@ -260,7 +446,7 @@ int main(int argc, char** argv) {
         float pitch = 0.;
         bool active = true;
         tickParam ticker = { 0 };
-        SDL_TimerID tickerId = SDL_AddTimer(28, tickCallback, &ticker);
+        SDL_TimerID tickerId = SDL_AddTimer(20, tickCallback, &ticker);
         // Render loop - do not quit until I quit
         while (active)
         {
@@ -289,6 +475,7 @@ int main(int argc, char** argv) {
             theShader.setUniform("view", view);
             theShader.setUniform("projection", projection);
 
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture);
             glActiveTexture(GL_TEXTURE1);
@@ -312,26 +499,52 @@ int main(int argc, char** argv) {
             }
 #endif
             shader2D.use();
-            int uv2TransformationLocation = shader2D.getUniformLocation("scale");
+            int uv2ScaleLocation = shader2D.getUniformLocation("scale");
             float uv2Scale[] = {
                 (float)controls->w / screenWidth,
                 (float)controls->h / screenHeight,
             };
-            glUniform2fv(uv2TransformationLocation, 1, uv2Scale);
-            uv2TransformationLocation = shader2D.getUniformLocation("translate");
+            //uv2Scale[0] = 1;
+            //uv2Scale[1] = 1;
+            glUniform2fv(uv2ScaleLocation, 1, uv2Scale);
+            int uv2TranslateLocation = shader2D.getUniformLocation("translate");
             float uv2Translate[] = {
                 -1 + uv2Scale[0],
                 1 - uv2Scale[1],
             };
-            glUniform2fv(uv2TransformationLocation, 1, uv2Translate);
+            //uv2Translate[0] = 0;
+            //uv2Translate[1] = 0;
+            glUniform2fv(uv2TranslateLocation, 1, uv2Translate);
             shader2D.setUniform("theTexture", 0);
 
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, controlTexture);
             glBindVertexArray(ctlVAO);
             glBindBuffer(GL_ARRAY_BUFFER, ctlVBO);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctlEBO);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+            shader2D.use();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            std::sprintf(stText, stTextFmt, xOffset, yOffset, zOffset, fov, aspXfactor, aspYfactor, yaw, pitch);
+            drawTextOnQuadGrid(stText, fontTexture, stQuad);
+            glBindBuffer(GL_ARRAY_BUFFER, stUvVBO);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, stQuad.rows * stQuad.cols * sizeof(unsigned int) * 6, stQuad.uv);
+            uv2Scale[0] = (float)(stCells.x * fontTexture.getCellSize().x) / screenWidth * 2;
+            uv2Scale[1] = (float)(stCells.y * fontTexture.getCellSize().y) / screenHeight * 2;
+            glUniform2fv(uv2ScaleLocation, 1, uv2Scale);
+            uv2Translate[0] = 1 - uv2Scale[0];
+            uv2Translate[1] = 1 - uv2Scale[1];
+            glUniform2fv(uv2TranslateLocation, 1, uv2Translate);
+            unsigned int fontTextureId = fontTexture.getTextureId();
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, fontTextureId);
+            shader2D.setUniform("theTexture", 1);
+            glBindVertexArray(stVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, stPosVBO);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, stEBO);
+            glDrawElements(GL_TRIANGLES, stQuad.rows * stQuad.cols * 6, GL_UNSIGNED_INT, 0);
 #else
             SDL_Rect destRect { 0, 0, controls->w, controls->h };
             SDL_RenderCopy(renderer, controlTexture, nullptr, &destRect);
@@ -432,10 +645,14 @@ int main(int argc, char** argv) {
 #endif
     }
 
+    delete[] stText;
 #ifndef GL
     SDL_DestroyTexture(controlTexture);
 #else
     SDL_GL_DeleteContext(glcontext);
+    delete[] stQuad.pos;
+    delete[] stQuad.uv;
+    delete[] stQuad.el;
 #endif
     // Release all GLFW resources and exit
     if(sdlImage)
@@ -499,11 +716,11 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
                 surface->format->format == SDL_PIXELFORMAT_BGR24 ||
                 surface->format->format == SDL_PIXELFORMAT_BGR888)
             {
-                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGB24;
+                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGB888;
             }
             else
             {
-                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGBA32;
+                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGBA8888;
             }
             GLSDLPixelFormat.palette = nullptr;
             GLSDLPixelFormat.BitsPerPixel = 8;
@@ -539,7 +756,7 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
         glActiveTexture(textureUnit);
         glBindTexture(GL_TEXTURE_2D, imageId);
         // Upload to GPU, set parameters, and generate mipmaps (lower res versions of the texture)
-        int texFormat = surface->format->format == SDL_PIXELFORMAT_RGB24 ? GL_RGB : GL_RGBA;
+        int texFormat = surface->format->format == SDL_PIXELFORMAT_RGB888 ? GL_RGB : GL_RGBA;
         glTexImage2D(GL_TEXTURE_2D, 0, texFormat, surface->w, surface->h, 0, texFormat, GL_UNSIGNED_BYTE, surface->pixels);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
@@ -566,29 +783,36 @@ unsigned int tickCallback(unsigned int interval, void* param)
     return interval;
 }
 
-SDL_Surface* drawTextToSurface(const char* text, SDL_Surface* font, int cellSizeX, int cellSizeY)
+vector2<unsigned int> getTextGridSize(const char* text)
 {
-    int textSurfaceWidth = 0;
-    int textSurfaceHeight = 0;
-    int i = 0;
-    int linePos = 0;
-    int lineCount = 1;
+    vector2<unsigned int> gridSize {0, 0};
+    unsigned int textIndex = 0;
+    unsigned int linePos = 0;
     // Assume null-terminated string
-    while (text[i] != 0)
+    while (text[textIndex] != 0)
     {
         linePos++;
-        if (text[i] == '\n')
+        if (text[textIndex] == '\n')
         {
-            lineCount++;
-            if (linePos * cellSizeX > textSurfaceWidth)
+            gridSize.y++;
+            if (linePos > gridSize.x)
             {
-                textSurfaceWidth = linePos * cellSizeX;
+                gridSize.x = linePos;
             }
             linePos = 0;
         }
-        ++i;
+        ++textIndex;
     }
-    textSurfaceHeight = lineCount * cellSizeY;
+    // std::cout << "Length of text: " << textIndex << std::endl;
+    return gridSize;
+}
+
+SDL_Surface* drawTextToSurface(const char* text, SDL_Surface* font, int cellSizeX, int cellSizeY)
+{
+    vector2<unsigned int> gridSize = getTextGridSize(text);
+    // std::cout << "gridSize " << gridSize.x << " " << gridSize.y << std::endl;
+    int textSurfaceWidth = gridSize.x * cellSizeX;
+    int textSurfaceHeight = gridSize.y * cellSizeY;
     SDL_Surface* textSurface = SDL_CreateRGBSurface(
         0,
         textSurfaceWidth,
@@ -606,26 +830,83 @@ SDL_Surface* drawTextToSurface(const char* text, SDL_Surface* font, int cellSize
         0xFF000000
 #endif
     );
-    i = 0;
-    linePos = 0;
-    lineCount = 0;
-    while (text[i] != 0)
+    unsigned int textIndex = 0;
+    int linePos = 0;
+    int lineCount = 0;
+    while (text[textIndex] != 0)
     {
-        if(text[i] == '\n')
+        if(text[textIndex] == '\n')
         {
             linePos = 0;
             lineCount++;
-            i++;
+            textIndex++;
             continue;
         }
-        int fontCharX = text[i] * cellSizeX;
+        int fontCharX = text[textIndex] * cellSizeX;
         int fontCharY = (fontCharX / font->w) * cellSizeY;
         fontCharX %= font->w;
         SDL_Rect surfaceRect { linePos * cellSizeX, lineCount * cellSizeY, cellSizeX, cellSizeY };
         SDL_Rect fontCharRect { fontCharX, fontCharY, cellSizeX, cellSizeY };
         SDL_BlitSurface(font, &fontCharRect, textSurface, &surfaceRect);
         linePos++;
-        i++;
+        textIndex++;
     }
     return textSurface;
+}
+
+void drawTextOnQuadGrid(const char* text, const FontTexture& fontexture, QuadGrid& grid)
+{
+    // 0   1
+    // +---+
+    // |  /|
+    // | / |
+    // |/  |
+    // +---+
+    // 2   3
+    // 0 1 2 1 2 3
+    float xFactor[] = { 0.0, 1.0, 0.0, 1.0 };
+    float yFactor[] = { 0.0, 0.0, 1.0, 1.0 };
+    unsigned int row = 0, col = 0, textIndex = 0;
+    bool onText = true;
+    char curChar = text[textIndex];
+    vector2<float> cellUv = fontexture.getCellUv();
+    while (curChar != 0)
+    {
+        // std::cout << curChar;
+        vector2<float> uv = fontexture.uvForChar(curChar);
+        unsigned int previous = row * grid.cols * 4 + col * 4;
+        for (unsigned int current = 0; current < 4; current++)
+        {
+            unsigned int vertex = previous + current;
+            if (onText)
+            {
+                grid.uv[vertex * 2] = uv.x + cellUv.x * xFactor[current];
+                grid.uv[vertex * 2 + 1] = uv.y + cellUv.y * yFactor[current];
+            }
+            else
+            {
+                grid.uv[vertex * 2] = 0.;
+                grid.uv[vertex * 2 + 1] = 0.;
+            }
+        }
+        col++;
+        if (curChar == '\n')
+        {
+            onText = false;
+        }
+        if (col == grid.cols)
+        {
+            col = 0;
+            row++;
+            while (curChar != '\n')
+            {
+                curChar = text[++textIndex];
+            }
+            onText = true;
+        }
+        if (onText)
+        {
+            curChar = text[++textIndex];
+        }
+    }
 }
