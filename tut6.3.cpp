@@ -104,7 +104,7 @@ private:
     vector2<float> cellUv;
     unsigned int textureId;
 public:
-    FontTexture(SDL_Surface* texture, vector2<unsigned int> cellSize, unsigned int texUnit = 0)
+    FontTexture(SDL_Surface* texture, vector2<unsigned int> cellSize, int texUnit = 0)
     {
         imageSize.x = texture->w;
         imageSize.y = texture->h;
@@ -345,6 +345,7 @@ int main(int argc, char** argv) {
     "More coming soon...\n", font, 8, 8);
 
 #ifdef GL
+    std::cout << "Controls image" << std::endl;
     unsigned int controlTexture = SDLSurfaceToGLImage(controls);
     float ctlVBuf[] = {
         -1., 1., 0.0, 0.0,
@@ -384,7 +385,9 @@ int main(int argc, char** argv) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    std::cout << "GL Font" << std::endl;
     FontTexture fontTexture(font, {8, 8}, GL_TEXTURE1);
+    unsigned int fontTextureId = fontTexture.getTextureId();
     const char* stTextFmt = "========== STATS ==========\n"
         "X Offset: %0.4f\n"
         "Y Offset: %0.4f\n"
@@ -446,7 +449,7 @@ int main(int argc, char** argv) {
         float pitch = 0.;
         bool active = true;
         tickParam ticker = { 0 };
-        SDL_TimerID tickerId = SDL_AddTimer(20, tickCallback, &ticker);
+        SDL_TimerID tickerId = SDL_AddTimer(30, tickCallback, &ticker);
         // Render loop - do not quit until I quit
         while (active)
         {
@@ -526,18 +529,19 @@ int main(int argc, char** argv) {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             shader2D.use();
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             std::sprintf(stText, stTextFmt, xOffset, yOffset, zOffset, fov, aspXfactor, aspYfactor, yaw, pitch);
             drawTextOnQuadGrid(stText, fontTexture, stQuad);
             glBindBuffer(GL_ARRAY_BUFFER, stUvVBO);
             glBufferSubData(GL_ARRAY_BUFFER, 0, stQuad.rows * stQuad.cols * sizeof(unsigned int) * 6, stQuad.uv);
-            uv2Scale[0] = (float)(stCells.x * fontTexture.getCellSize().x) / screenWidth * 2;
-            uv2Scale[1] = (float)(stCells.y * fontTexture.getCellSize().y) / screenHeight * 2;
+
+            uv2Scale[0] = (float)(stCells.x * fontTexture.getCellSize().x) / screenWidth;
+            uv2Scale[1] = (float)(stCells.y * fontTexture.getCellSize().y) / screenHeight;
             glUniform2fv(uv2ScaleLocation, 1, uv2Scale);
             uv2Translate[0] = 1 - uv2Scale[0];
             uv2Translate[1] = 1 - uv2Scale[1];
             glUniform2fv(uv2TranslateLocation, 1, uv2Translate);
-            unsigned int fontTextureId = fontTexture.getTextureId();
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, fontTextureId);
             shader2D.setUniform("theTexture", 1);
@@ -680,6 +684,7 @@ unsigned int loadGLImage(const char* fname, bool makeMipmap, GLint textureUnit, 
             return 0;
         }
     }
+    std::cout << "Loading image " << fname << std::endl;
     SDL_Surface* imgSurface = IMG_Load(fname);
     if (imgSurface)
     {
@@ -716,15 +721,16 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
                 surface->format->format == SDL_PIXELFORMAT_BGR24 ||
                 surface->format->format == SDL_PIXELFORMAT_BGR888)
             {
-                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGB888;
+                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGB24;
+                GLSDLPixelFormat.BytesPerPixel = 3;
             }
             else
             {
-                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGBA8888;
+                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGBA32;
+                GLSDLPixelFormat.BytesPerPixel = 4;
             }
             GLSDLPixelFormat.palette = nullptr;
             GLSDLPixelFormat.BitsPerPixel = 8;
-            GLSDLPixelFormat.BytesPerPixel = 4;
             GLSDLPixelFormat.Rmask =
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
             0xFF000000;
@@ -756,7 +762,17 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
         glActiveTexture(textureUnit);
         glBindTexture(GL_TEXTURE_2D, imageId);
         // Upload to GPU, set parameters, and generate mipmaps (lower res versions of the texture)
-        int texFormat = surface->format->format == SDL_PIXELFORMAT_RGB888 ? GL_RGB : GL_RGBA;
+        int texFormat = surface->format->format == SDL_PIXELFORMAT_RGB24 ? GL_RGB : GL_RGBA;
+        std::cout << "texFormat is ";
+        if (texFormat == GL_RGB)
+        {
+            std::cout << "GL_RGB";
+        }
+        else
+        {
+            std::cout << "GL_RGBA";
+        }
+        std::cout << std::endl;
         glTexImage2D(GL_TEXTURE_2D, 0, texFormat, surface->w, surface->h, 0, texFormat, GL_UNSIGNED_BYTE, surface->pixels);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
