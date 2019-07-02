@@ -22,7 +22,7 @@
 bool sdlImage = false;
 
 unsigned int loadGLImage(const char* fname, bool makeMipmap = true, GLint textureUnit = GL_TEXTURE0, GLint wrapMode = GL_REPEAT, GLint magFilter = GL_NEAREST, GLint minFilter = GL_LINEAR_MIPMAP_LINEAR);
-unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap = true, GLint textureUnit = GL_TEXTURE0, GLint wrapMode = GL_REPEAT, GLint magFilter = GL_NEAREST, GLint minFilter = GL_LINEAR_MIPMAP_LINEAR);
+unsigned int SDLSurfaceToGLImage(SDL_Surface*& surface, bool makeMipmap = true, GLint textureUnit = GL_TEXTURE0, GLint wrapMode = GL_REPEAT, GLint magFilter = GL_NEAREST, GLint minFilter = GL_LINEAR_MIPMAP_LINEAR);
 unsigned int tickCallback(unsigned int interval, void* param);
 SDL_Surface* drawTextToSurface(const char* text, SDL_Surface* font, int cellSizeX = 8, int cellSizeY = 8);
 
@@ -75,8 +75,8 @@ struct QuadGrid {
             {
                 for (unsigned int col = 0; col < cols; col++)
                 {
-                    float xPos = (float)col / cols * 2 - 1;
-                    float yPos = (float)row / rows * 2 - 1;
+                    float xPos = (float)col / (cols-1) * 2 - 1;
+                    float yPos = 1 - (float)row / (rows-1) * 2;
                     for (unsigned int element = 0; element < 6; element++)
                     {
                         el[curElement++] = elements[element] + curVertex;
@@ -104,7 +104,7 @@ private:
     vector2<float> cellUv;
     unsigned int textureId;
 public:
-    FontTexture(SDL_Surface* texture, vector2<unsigned int> cellSize, int texUnit = 0)
+    FontTexture(SDL_Surface*& texture, vector2<unsigned int> cellSize, int texUnit = 0)
     {
         imageSize.x = texture->w;
         imageSize.y = texture->h;
@@ -133,7 +133,7 @@ public:
         this->textureId = previous.textureId;
     }
     FontTexture& operator= (FontTexture&& previous);
-    // UV coordinates for upper left corner of given byte
+    // UV coordinates for upper left corner of the given byte
     vector2<float> uvForChar(char ch) const;
     vector2<float> getCellUv() const
     {
@@ -160,6 +160,7 @@ FontTexture& FontTexture::operator= (FontTexture&& previous)
 
 vector2<float> FontTexture::uvForChar(char ch) const
 {
+    // Get the UV for the upper left corner of a particular character
     vector2<unsigned int> cells;
     vector2<unsigned int> pos;
     cells.x = imageSize.x / cellSize.x;
@@ -344,7 +345,6 @@ int main(int argc, char** argv) {
     "Turn: Arrow keys\n"
     "More coming soon...\n", font, 8, 8);
 #ifdef GL
-    std::cout << "Controls image" << std::endl;
     unsigned int controlTexture = SDLSurfaceToGLImage(controls);
     float ctlVBuf[] = {
         -1., 1., 0.0, 0.0,
@@ -384,7 +384,6 @@ int main(int argc, char** argv) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    std::cout << "GL Font" << std::endl;
     FontTexture fontTexture(font, {8, 8}, GL_TEXTURE1);
     unsigned int fontTextureId = fontTexture.getTextureId();
     const char* stTextFmt = "========== STATS ==========\n"
@@ -533,8 +532,8 @@ int main(int argc, char** argv) {
             glBindBuffer(GL_ARRAY_BUFFER, stUvVBO);
             glBufferSubData(GL_ARRAY_BUFFER, 0, stQuad.rows * stQuad.cols * sizeof(unsigned int) * 6, stQuad.uv);
 
-            uv2Scale[0] = (float)(stCells.x * fontTexture.getCellSize().x) / screenWidth;
-            uv2Scale[1] = (float)(stCells.y * fontTexture.getCellSize().y) / screenHeight;
+            uv2Scale[0] = (float)((stCells.x + 1) * fontTexture.getCellSize().x) / screenWidth;
+            uv2Scale[1] = (float)((stCells.y + 1) * fontTexture.getCellSize().y) / screenHeight;
             glUniform2fv(uv2ScaleLocation, 1, uv2Scale);
             uv2Translate[0] = 1 - uv2Scale[0];
             uv2Translate[1] = 1 - uv2Scale[1];
@@ -683,7 +682,6 @@ unsigned int loadGLImage(const char* fname, bool makeMipmap, GLint textureUnit, 
             return 0;
         }
     }
-    std::cout << "Loading image " << fname << std::endl;
     SDL_Surface* imgSurface = IMG_Load(fname);
     if (imgSurface)
     {
@@ -695,7 +693,7 @@ unsigned int loadGLImage(const char* fname, bool makeMipmap, GLint textureUnit, 
     return 0;
 }
 
-unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint textureUnit, GLint wrapMode, GLint magFilter, GLint minFilter)
+unsigned int SDLSurfaceToGLImage(SDL_Surface*& surface, bool makeMipmap, GLint textureUnit, GLint wrapMode, GLint magFilter, GLint minFilter)
 {
     unsigned int imageId;
     if (surface)
@@ -771,6 +769,7 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
                 }
                 else
                 {
+                    // Re-assign original pointer to new surface
                     SDL_FreeSurface(surface);
                     surface = newSurface;
                 }
@@ -782,6 +781,7 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
         glBindTexture(GL_TEXTURE_2D, imageId);
         // Upload to GPU, set parameters, and generate mipmaps (lower res versions of the texture)
         int texFormat = surface->format->format == SDL_PIXELFORMAT_RGB24 ? GL_RGB : GL_RGBA;
+        /*
         std::cout << "texFormat is ";
         if (texFormat == GL_RGB)
         {
@@ -791,6 +791,7 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
         {
             std::cout << "GL_RGBA";
         }
+        */
         std::cout << std::endl;
         glTexImage2D(GL_TEXTURE_2D, 0, texFormat, surface->w, surface->h, 0, texFormat, GL_UNSIGNED_BYTE, surface->pixels);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
