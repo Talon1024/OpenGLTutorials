@@ -112,7 +112,7 @@ public:
         cellUv.x = (float)cellSize.x / imageSize.x;
         cellUv.y = (float)cellSize.y / imageSize.y;
         textureId = SDLSurfaceToGLImage(texture, true, texUnit);
-        if(textureId == 0)
+        if (textureId == 0)
         {
             std::cerr << "Failed to convert the texture for some reason!" << std::endl;
         }
@@ -343,7 +343,6 @@ int main(int argc, char** argv) {
     "Shrink horizontally: Numpad 4\n"
     "Turn: Arrow keys\n"
     "More coming soon...\n", font, 8, 8);
-
 #ifdef GL
     std::cout << "Controls image" << std::endl;
     unsigned int controlTexture = SDLSurfaceToGLImage(controls);
@@ -704,7 +703,8 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
         if (surface->format->format != SDL_PIXELFORMAT_RGB24 && 
             surface->format->format != SDL_PIXELFORMAT_RGBA32)
         {
-            SDL_PixelFormat GLSDLPixelFormat;
+            // SDL_PixelFormat GLSDLPixelFormat;
+            unsigned int newPixelFormat = 0;
             if (surface->format->format == SDL_PIXELFORMAT_INDEX1LSB ||
                 surface->format->format == SDL_PIXELFORMAT_INDEX1MSB ||
                 surface->format->format == SDL_PIXELFORMAT_INDEX4LSB ||
@@ -721,14 +721,17 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
                 surface->format->format == SDL_PIXELFORMAT_BGR24 ||
                 surface->format->format == SDL_PIXELFORMAT_BGR888)
             {
-                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGB24;
-                GLSDLPixelFormat.BytesPerPixel = 3;
+                // GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGB24;
+                // GLSDLPixelFormat.BytesPerPixel = 3;
+                newPixelFormat = SDL_PIXELFORMAT_RGB24;
             }
             else
             {
-                GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGBA32;
-                GLSDLPixelFormat.BytesPerPixel = 4;
+                // GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGBA32;
+                // GLSDLPixelFormat.BytesPerPixel = 4;
+                newPixelFormat = SDL_PIXELFORMAT_RGBA32;
             }
+            /*
             GLSDLPixelFormat.palette = nullptr;
             GLSDLPixelFormat.BitsPerPixel = 8;
             GLSDLPixelFormat.Rmask =
@@ -755,7 +758,23 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface* surface, bool makeMipmap, GLint te
 #else
             0xFF000000;
 #endif
-            SDL_ConvertSurface(surface, &GLSDLPixelFormat, 0);
+            */
+            if (surface->format->format != newPixelFormat)
+            {
+                //SDL_Surface* newSurface = SDL_ConvertSurface(surface, &GLSDLPixelFormat, 0);
+                SDL_Surface* newSurface = SDL_ConvertSurfaceFormat(surface, newPixelFormat, 0);
+                if (newSurface == NULL)
+                {
+                    std::cerr << "Failed to convert the surface for some reason:" << std::endl <<
+                        SDL_GetError() << std::endl;
+                    return 0;
+                }
+                else
+                {
+                    SDL_FreeSurface(surface);
+                    surface = newSurface;
+                }
+            }
         }
         // Create GL texture
         glGenTextures(1, &imageId);
