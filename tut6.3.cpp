@@ -69,14 +69,14 @@ struct QuadGrid {
             el = new unsigned int[quadCount * 6];
             unsigned int curVertex = 0;
             unsigned int curElement = 0;
-            float xSize = (float)1 / cols * 2;
-            float ySize = (float)1 / rows * 2;
+            float xSize = 1. / cols * 2;
+            float ySize = 1. / rows * 2;
             for (unsigned int row = 0; row < rows; row++)
             {
                 for (unsigned int col = 0; col < cols; col++)
                 {
-                    float xPos = (float)col / (cols-1) * 2 - 1;
-                    float yPos = 1 - (float)row / (rows-1) * 2;
+                    float xPos = (float)col / cols * 2 - 1;
+                    float yPos = 1 - (float)row / rows * 2;
                     for (unsigned int element = 0; element < 6; element++)
                     {
                         el[curElement++] = elements[element] + curVertex;
@@ -165,8 +165,8 @@ vector2<float> FontTexture::uvForChar(char ch) const
     vector2<unsigned int> pos;
     cells.x = imageSize.x / cellSize.x;
     cells.y = imageSize.y / cellSize.y;
-    pos.x = ch / cells.y;
-    pos.y = ch % cells.x;
+    pos.x = ch % cells.y;
+    pos.y = ch / cells.x;
     vector2<float> uv;
     uv.x = cellUv.x * pos.x;
     uv.y = cellUv.y * pos.y;
@@ -532,11 +532,11 @@ int main(int argc, char** argv) {
             glBindBuffer(GL_ARRAY_BUFFER, stUvVBO);
             glBufferSubData(GL_ARRAY_BUFFER, 0, stQuad.rows * stQuad.cols * sizeof(unsigned int) * 6, stQuad.uv);
 
-            uv2Scale[0] = (float)((stCells.x + 1) * fontTexture.getCellSize().x) / screenWidth;
-            uv2Scale[1] = (float)((stCells.y + 1) * fontTexture.getCellSize().y) / screenHeight;
+            uv2Scale[0] = (float)(stCells.x * fontTexture.getCellSize().x) / screenWidth;
+            uv2Scale[1] = (float)(stCells.y * fontTexture.getCellSize().y) / screenHeight;
             glUniform2fv(uv2ScaleLocation, 1, uv2Scale);
-            uv2Translate[0] = 1 - uv2Scale[0];
-            uv2Translate[1] = 1 - uv2Scale[1];
+            uv2Translate[0] = 1 - uv2Scale[0] * 2;
+            uv2Translate[1] = 1 - uv2Scale[1] * 2;
             glUniform2fv(uv2TranslateLocation, 1, uv2Translate);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -698,68 +698,21 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface*& surface, bool makeMipmap, GLint t
     unsigned int imageId;
     if (surface)
     {
-        if (surface->format->format != SDL_PIXELFORMAT_RGB24 && 
+        // Convert surface pixel format to a format usable by OpenGL
+        if (surface->format->format != SDL_PIXELFORMAT_RGB24 &&
             surface->format->format != SDL_PIXELFORMAT_RGBA32)
         {
-            // SDL_PixelFormat GLSDLPixelFormat;
             unsigned int newPixelFormat = 0;
-            if (surface->format->format == SDL_PIXELFORMAT_INDEX1LSB ||
-                surface->format->format == SDL_PIXELFORMAT_INDEX1MSB ||
-                surface->format->format == SDL_PIXELFORMAT_INDEX4LSB ||
-                surface->format->format == SDL_PIXELFORMAT_INDEX4MSB ||
-                surface->format->format == SDL_PIXELFORMAT_INDEX8 ||
-                surface->format->format == SDL_PIXELFORMAT_RGB332 ||
-                surface->format->format == SDL_PIXELFORMAT_RGB444 ||
-                surface->format->format == SDL_PIXELFORMAT_RGB555 ||
-                surface->format->format == SDL_PIXELFORMAT_RGB565 ||
-                surface->format->format == SDL_PIXELFORMAT_RGB24 ||
-                surface->format->format == SDL_PIXELFORMAT_RGB888 ||
-                surface->format->format == SDL_PIXELFORMAT_BGR555 ||
-                surface->format->format == SDL_PIXELFORMAT_BGR565 ||
-                surface->format->format == SDL_PIXELFORMAT_BGR24 ||
-                surface->format->format == SDL_PIXELFORMAT_BGR888)
+            if (SDL_ISPIXELFORMAT_ALPHA(surface->format->format))
             {
-                // GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGB24;
-                // GLSDLPixelFormat.BytesPerPixel = 3;
-                newPixelFormat = SDL_PIXELFORMAT_RGB24;
+                newPixelFormat = SDL_PIXELFORMAT_RGBA32;
             }
             else
             {
-                // GLSDLPixelFormat.format = SDL_PIXELFORMAT_RGBA32;
-                // GLSDLPixelFormat.BytesPerPixel = 4;
-                newPixelFormat = SDL_PIXELFORMAT_RGBA32;
+                newPixelFormat = SDL_PIXELFORMAT_RGB24;
             }
-            /*
-            GLSDLPixelFormat.palette = nullptr;
-            GLSDLPixelFormat.BitsPerPixel = 8;
-            GLSDLPixelFormat.Rmask =
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-            0xFF000000;
-#else
-            0x000000FF;
-#endif
-            GLSDLPixelFormat.Gmask =
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-            0x00FF0000;
-#else
-            0x0000FF00;
-#endif
-            GLSDLPixelFormat.Bmask =
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-            0x0000FF00;
-#else
-            0x00FF0000;
-#endif
-            GLSDLPixelFormat.Amask =
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-            0x000000FF;
-#else
-            0xFF000000;
-#endif
-            */
             if (surface->format->format != newPixelFormat)
             {
-                //SDL_Surface* newSurface = SDL_ConvertSurface(surface, &GLSDLPixelFormat, 0);
                 SDL_Surface* newSurface = SDL_ConvertSurfaceFormat(surface, newPixelFormat, 0);
                 if (newSurface == NULL)
                 {
@@ -769,7 +722,6 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface*& surface, bool makeMipmap, GLint t
                 }
                 else
                 {
-                    // Re-assign original pointer to new surface
                     SDL_FreeSurface(surface);
                     surface = newSurface;
                 }
@@ -908,7 +860,12 @@ void drawTextOnQuadGrid(const char* text, const FontTexture& fontexture, QuadGri
     vector2<float> cellUv = fontexture.getCellUv();
     while (curChar != 0)
     {
-        // std::cout << curChar;
+        /*
+        if (onText)
+        {
+            std::printf("%hhu\n", curChar);
+        }
+        */
         vector2<float> uv = fontexture.uvForChar(curChar);
         unsigned int previous = row * grid.cols * 4 + col * 4;
         for (unsigned int current = 0; current < 4; current++)
@@ -917,7 +874,7 @@ void drawTextOnQuadGrid(const char* text, const FontTexture& fontexture, QuadGri
             if (onText)
             {
                 grid.uv[vertex * 2] = uv.x + cellUv.x * xFactor[current];
-                grid.uv[vertex * 2 + 1] = uv.y + cellUv.y * yFactor[current];
+                grid.uv[vertex * 2 + 1] = uv.y + cellUv.y * (1 - yFactor[current]);
             }
             else
             {
