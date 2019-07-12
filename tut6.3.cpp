@@ -1,8 +1,5 @@
-#include "glad.h"
-
 #include <iostream>
 #include <cstring>
-#include "shader.h"
 #include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -15,6 +12,10 @@
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_timer.h>
 
+#include "glad.h"
+#include "input.h"
+#include "shader.h"
+
 // Tutorial 6: Coordinate systems - Part 3: Exercises
 // Using SDL instead of GLFW
 // https://learnopengl.com/Getting-started/Coordinate-Systems
@@ -26,9 +27,30 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface*& surface, bool makeMipmap = true, 
 unsigned int tickCallback(unsigned int interval, void* param);
 SDL_Surface* drawTextToSurface(const char* text, SDL_Surface* font, int cellSizeX = 8, int cellSizeY = 8);
 
+struct controlledCamera
+{
+    float xOffset = 0.;
+    float yOffset = 0.;
+    float zOffset = -3.;
+    float fov = 45.0;
+    float aspXfactor = 1.;
+    float aspYfactor = 1.;
+    float yaw = 0.;
+    float pitch = 0.;
+    int inXOffset = 0;
+    int inYOffset = 0;
+    int inZOffset = 0;
+    int inFov = 0;
+    int inAspXFactor = 0;
+    int inAspYFactor = 0;
+    int inYaw = 0;
+    int inPitch = 0;
+};
+
 struct tickParam
 {
     unsigned int tick;
+    controlledCamera* camera;
 };
 
 template<typename T> struct vector2
@@ -437,16 +459,44 @@ int main(int argc, char** argv) {
 #endif
         KShaderProgram shader2D("2d.vp", "2d.fp");
 #endif
-        float xOffset = 0.;
-        float yOffset = 0.;
-        float zOffset = -3.;
-        float fov = 45.0;
-        float aspXfactor = 1.;
-        float aspYfactor = 1.;
-        float yaw = 0.;
-        float pitch = 0.;
+        controlledCamera camera; //{0., 0., -3., 45., 1., 1., 0., 0., 0, 0, 0, 0, 0, 0, 0, 0};
+
         bool active = true;
-        tickParam ticker = { 0 };
+        KeyboardInputHandler kbInput;
+        kbInput.setHandler(SDLK_h, true, [&camera]{ camera.inXOffset = 1; });
+        kbInput.setHandler(SDLK_h, false, [&camera]{ camera.inXOffset = 0; });
+        kbInput.setHandler(SDLK_j, true, [&camera]{ camera.inYOffset = 1; });
+        kbInput.setHandler(SDLK_j, false, [&camera]{ camera.inYOffset = 0; });
+        kbInput.setHandler(SDLK_k, true, [&camera]{ camera.inYOffset = -1; });
+        kbInput.setHandler(SDLK_k, false, [&camera]{ camera.inYOffset = 0; });
+        kbInput.setHandler(SDLK_l, true, [&camera]{ camera.inXOffset = -1; });
+        kbInput.setHandler(SDLK_l, false, [&camera]{ camera.inXOffset = 0; });
+        kbInput.setHandler(SDLK_w, true, [&camera]{ camera.inZOffset = 1; });
+        kbInput.setHandler(SDLK_w, false, [&camera]{ camera.inZOffset = 0; });
+        kbInput.setHandler(SDLK_s, true, [&camera]{ camera.inZOffset = -1; });
+        kbInput.setHandler(SDLK_s, false, [&camera]{ camera.inZOffset = 0; });
+        kbInput.setHandler(SDLK_t, true, [&camera]{ camera.inFov = 1; });
+        kbInput.setHandler(SDLK_t, false, [&camera]{ camera.inFov = 0; });
+        kbInput.setHandler(SDLK_y, true, [&camera]{ camera.inFov = -1; });
+        kbInput.setHandler(SDLK_y, false, [&camera]{ camera.inFov = 0; });
+        kbInput.setHandler(SDLK_KP_8, true, [&camera]{ camera.inAspYFactor = -1; });
+        kbInput.setHandler(SDLK_KP_8, false, [&camera]{ camera.inAspYFactor = 0; });
+        kbInput.setHandler(SDLK_KP_2, true, [&camera]{ camera.inAspYFactor = 1; });
+        kbInput.setHandler(SDLK_KP_2, false, [&camera]{ camera.inAspYFactor = 0; });
+        kbInput.setHandler(SDLK_KP_6, true, [&camera]{ camera.inAspXFactor = -1; });
+        kbInput.setHandler(SDLK_KP_6, false, [&camera]{ camera.inAspXFactor = 0; });
+        kbInput.setHandler(SDLK_KP_4, true, [&camera]{ camera.inAspXFactor = 1; });
+        kbInput.setHandler(SDLK_KP_4, false, [&camera]{ camera.inAspXFactor = 0; });
+        kbInput.setHandler(SDLK_UP, true, [&camera]{ camera.inPitch = 1; });
+        kbInput.setHandler(SDLK_UP, false, [&camera]{ camera.inPitch = 0; });
+        kbInput.setHandler(SDLK_DOWN, true, [&camera]{ camera.inPitch = -1; });
+        kbInput.setHandler(SDLK_DOWN, false, [&camera]{ camera.inPitch = 0; });
+        kbInput.setHandler(SDLK_RIGHT, true, [&camera]{ camera.inYaw = 1; });
+        kbInput.setHandler(SDLK_RIGHT, false, [&camera]{ camera.inYaw = 0; });
+        kbInput.setHandler(SDLK_LEFT, true, [&camera]{ camera.inYaw = -1; });
+        kbInput.setHandler(SDLK_LEFT, false, [&camera]{ camera.inYaw = 0; });
+
+        tickParam ticker = { 0, &camera };
         SDL_TimerID tickerId = SDL_AddTimer(30, tickCallback, &ticker);
         // Render loop - do not quit until I quit
         while (active)
@@ -461,13 +511,13 @@ int main(int argc, char** argv) {
 #ifdef CUBES
             // Global space to view coordinates
             glm::mat4 view(1.);
-            view = glm::rotate(view, yaw, glm::vec3(0., 1., 0.));
-            view = glm::rotate(view, pitch, glm::vec3(1., 0., 0.));
-            view = glm::translate(view, glm::vec3(xOffset, yOffset, zOffset));
+            view = glm::rotate(view, camera.yaw, glm::vec3(0., 1., 0.));
+            view = glm::rotate(view, camera.pitch, glm::vec3(1., 0., 0.));
+            view = glm::translate(view, glm::vec3(camera.xOffset, camera.yOffset, camera.zOffset));
 
             // Projection
             glm::mat4 projection(1.);
-            projection = glm::perspective(glm::radians(fov), ((float)screenWidth * aspXfactor) / ((float)screenHeight * aspYfactor), 0.1f, 100.f);
+            projection = glm::perspective(glm::radians(camera.fov), ((float)screenWidth * camera.aspXfactor) / ((float)screenHeight * camera.aspYfactor), 0.1f, 100.f);
 
             // Use shader program
             theShader.use();
@@ -527,7 +577,7 @@ int main(int argc, char** argv) {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             shader2D.use();
-            std::sprintf(stText, stTextFmt, xOffset, yOffset, zOffset, fov, aspXfactor, aspYfactor, yaw, pitch);
+            std::snprintf(stText, stCells.x * stCells.y, stTextFmt, camera.xOffset, camera.yOffset, camera.zOffset, camera.fov, camera.aspXfactor, camera.aspYfactor, camera.yaw, camera.pitch);
             drawTextOnQuadGrid(stText, fontTexture, stQuad);
             glBindBuffer(GL_ARRAY_BUFFER, stUvVBO);
             glBufferSubData(GL_ARRAY_BUFFER, 0, stQuad.rows * stQuad.cols * sizeof(unsigned int) * 6, stQuad.uv);
@@ -554,90 +604,32 @@ int main(int argc, char** argv) {
             // Display rendered frame while waiting for the other frame to render
             SDL_GL_SwapWindow(window);
             SDL_Event event;
-            SDL_PollEvent(&event);
-            if (event.type == SDL_WINDOWEVENT)
+            while(SDL_PollEvent(&event))
             {
-                if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+                if (event.type == SDL_WINDOWEVENT)
                 {
-                    SDL_GetWindowSize(window, &screenWidth, &screenHeight);
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+                    {
+                        SDL_GetWindowSize(window, &screenWidth, &screenHeight);
+                    }
+                    if (event.window.event == SDL_WINDOWEVENT_CLOSE)
+                    {
+                        active = false;
+                        SDL_RemoveTimer(tickerId);
+                    }
                 }
-                if (event.window.event == SDL_WINDOWEVENT_CLOSE)
+                else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
                 {
-                    active = false;
-                    SDL_RemoveTimer(tickerId);
-                }
-            }
-            else if (event.type == SDL_KEYDOWN)
-            {
-                // Negative powers of 2 are easy on a computer
-                if (event.key.keysym.sym == SDLK_h)
-                {
-                    xOffset += .125;
-                }
-                if (event.key.keysym.sym == SDLK_j)
-                {
-                    yOffset += .125;
-                }
-                if (event.key.keysym.sym == SDLK_k)
-                {
-                    yOffset -= .125;
-                }
-                if (event.key.keysym.sym == SDLK_l)
-                {
-                    xOffset -= .125;
-                }
-                if (event.key.keysym.sym == SDLK_w)
-                {
-                    zOffset += .125;
-                }
-                if (event.key.keysym.sym == SDLK_s)
-                {
-                    zOffset -= .125;
-                }
-                if (event.key.keysym.sym == SDLK_t)
-                {
-                    fov += .5;
-                }
-                if (event.key.keysym.sym == SDLK_y)
-                {
-                    fov -= .5;
-                }
-                if (event.key.keysym.sym == SDLK_KP_8)
-                {
-                    aspYfactor -= 0.0625;
-                }
-                if (event.key.keysym.sym == SDLK_KP_2)
-                {
-                    aspYfactor += 0.0625;
-                }
-                if (event.key.keysym.sym == SDLK_KP_6)
-                {
-                    aspXfactor -= 0.0625;
-                }
-                if (event.key.keysym.sym == SDLK_KP_4)
-                {
-                    aspXfactor += 0.0625;
-                }
-                if (event.key.keysym.sym == SDLK_UP)
-                {
-                    pitch += .03125;
-                }
-                if (event.key.keysym.sym == SDLK_DOWN)
-                {
-                    pitch -= .03125;
-                }
-                if (event.key.keysym.sym == SDLK_RIGHT)
-                {
-                    yaw += .03125;
-                }
-                if (event.key.keysym.sym == SDLK_LEFT)
-                {
-                    yaw -= .03125;
-                }
-                if (event.key.keysym.sym == SDLK_ESCAPE)
-                {
-                    active = false;
-                    SDL_RemoveTimer(tickerId);
+                    bool state = event.type == SDL_KEYDOWN;
+                    if (kbInput.handle(event.key.keysym.sym, state))
+                    {
+                        continue;
+                    }
+                    if (event.key.keysym.sym == SDLK_ESCAPE)
+                    {
+                        active = false;
+                        SDL_RemoveTimer(tickerId);
+                    }
                 }
             }
         }
@@ -667,6 +659,21 @@ int main(int argc, char** argv) {
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;
+}
+
+unsigned int tickCallback(unsigned int interval, void* param)
+{
+    tickParam* ticker = (tickParam*)param;
+    ticker->tick += 1;
+    ticker->camera->xOffset += .125 * ticker->camera->inXOffset;
+    ticker->camera->yOffset += .125 * ticker->camera->inYOffset;
+    ticker->camera->zOffset += .125 * ticker->camera->inZOffset;
+    ticker->camera->fov += .5 * ticker->camera->inFov;
+    ticker->camera->aspXfactor += 0.0625 * ticker->camera->inAspXFactor;
+    ticker->camera->aspYfactor += 0.0625 * ticker->camera->inAspYFactor;
+    ticker->camera->pitch += .03125 * ticker->camera->inPitch;
+    ticker->camera->yaw += .03125 * ticker->camera->inYaw;
+    return interval;
 }
 
 unsigned int loadGLImage(const char* fname, bool makeMipmap, GLint textureUnit, GLint wrapMode, GLint magFilter, GLint minFilter)
@@ -762,13 +769,6 @@ unsigned int SDLSurfaceToGLImage(SDL_Surface*& surface, bool makeMipmap, GLint t
         return 0;
     }
     return imageId;
-}
-
-unsigned int tickCallback(unsigned int interval, void* param)
-{
-    tickParam* ticker = (tickParam*)param;
-    ticker->tick += 1;
-    return interval;
 }
 
 vector2<unsigned int> getTextGridSize(const char* text)
