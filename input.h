@@ -14,6 +14,6 @@ public:
     // KeyboardInputHandler(std::vector<int> keys);
     // KeyboardInputHandler();
     bool handle(int key, bool state);
-    bool hasHandler(int key, bool state, std::function<void()>* outHandler = nullptr) const;
+    // bool hasHandler(int key, bool state, std::function<void()>* outHandler = nullptr) const;
     void setHandler(int key, bool state, std::function<void()> handler);
 };
