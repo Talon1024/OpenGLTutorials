@@ -14,6 +14,7 @@ KeyboardInputHandler::KeyboardInputHandler(std::vector<int> keys)
 
 bool KeyboardInputHandler::handle(int key, bool state)
 {
+    /*
     bool hasHandler = false;
     try
     {
@@ -34,7 +35,7 @@ bool KeyboardInputHandler::handle(int key, bool state)
         hasHandler = false;
     }
     return hasHandler;
-    /*
+    */
     std::function<void()> handler = nullptr;
     if (hasHandler(key, state, &handler))
     {
@@ -42,9 +43,8 @@ bool KeyboardInputHandler::handle(int key, bool state)
         return true;
     }
     return false;
-    */
 }
-/*
+
 bool KeyboardInputHandler::hasHandler(int key, bool state, std::function<void()>* outHandler) const
 {
     bool hasHandler = false;
@@ -59,7 +59,10 @@ bool KeyboardInputHandler::hasHandler(int key, bool state, std::function<void()>
         {
             handler = upHandlers.at(key);
         }
-        outHandler = &handler;
+        if (outHandler != nullptr)
+        {
+            *outHandler = handler;
+        }
         hasHandler = true;
     }
     catch (const std::out_of_range)
@@ -68,7 +71,7 @@ bool KeyboardInputHandler::hasHandler(int key, bool state, std::function<void()>
     }
     return hasHandler;
 }
-*/
+
 void KeyboardInputHandler::setHandler(int key, bool state, std::function<void()> handler)
 {
     std::map<int, std::function<void()>>* handlerMap = state ? &this->downHandlers : &this->upHandlers;

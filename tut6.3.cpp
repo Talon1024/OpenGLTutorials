@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
     int screenHeight = 600;
 
     // Set GLFW hints so that OpenGL version 3.3 is used
-    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
     {
         std::cerr << SDL_GetError() << std::endl;
         SDL_Quit();
